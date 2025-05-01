@@ -1,0 +1,22 @@
+[project]
+name = "forgesync"
+version = "0.1.0"
+description = "Forge synchronization"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pyforgejo>=2.0.2",
+    "pygithub>=2.6.1",
+    "typed-argument-parser>=1.10.1",
+    "xdg-base-dirs>=6.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+forgesync = "forgesync.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forgesync"]
