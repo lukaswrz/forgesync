@@ -10,6 +10,12 @@ While Forgejo supports periodic Git mirroring out of the box, setting these mirr
 * Setting up mirrors directly within the source Forgejo instance  
 * Filtering out forks, mirrors, and private repositories (only syncing what matters)
 
+## Getting Forgesync
+
+Currently, a Nix package is provided as part of this Nix flake. To use it in an ephemeral shell, run `nix shell git+https://codeberg.org/helvetica/forgesync.git`.
+
+If you can't or don't want to use Nix for this, the best option right now is cloning the repository and using `uv run forgesync`.
+
 ## 💻 CLI usage
 
 Here's how you would synchronize your Codeberg repositories to GitHub:
