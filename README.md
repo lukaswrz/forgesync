@@ -47,15 +47,23 @@ Not yet.
 ## 🔑 Required token scopes
 
 ### Source (Forgejo)
+
 Your `FROM_TOKEN` must have:
+
 * **Repository:** read + write
 * **User data:** read
 
 ### Destination (GitHub or Forgejo)
+
 Your `TO_TOKEN` must have:
+
 * **Repository:** read + write  
 * **User data:** read
 
 ### Mirror Token
+
 The mirror token only needs:
-- **Repository:** read + write
+
+* **Repository:** read + write
+
+For GitHub fine-grained personal access tokens, this means that you will need to check "all repositories" under repository access and enable read and write permissions on repository contents.
