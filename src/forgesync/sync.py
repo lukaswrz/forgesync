@@ -23,7 +23,10 @@ class SyncedRepository:
 class Syncer(ABC):
     @abstractmethod
     def sync(
-        self: Self, from_repo: ForgejoRepository, description: str
+        self: Self,
+        from_repo: ForgejoRepository,
+        description: str,
+        topics: list[str],
     ) -> SyncedRepository:
         pass
 

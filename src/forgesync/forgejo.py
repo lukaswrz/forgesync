@@ -37,6 +37,7 @@ class ForgejoSyncer(Syncer):
         self: Self,
         from_repo: ForgejoRepository,
         description: str,
+        topics: list[str],
     ) -> SyncedRepository:
         assert from_repo.name is not None
         self.logger.info("Synchronizing %s", from_repo.name)
@@ -79,8 +80,6 @@ class ForgejoSyncer(Syncer):
             wiki_branch=from_repo.wiki_branch,
         )
 
-        self.logger.info("Updated Forgejo repository %s", edited_repo.full_name)
-
         if (
             edited_repo.owner is None
             or edited_repo.owner.login is None
@@ -90,6 +89,14 @@ class ForgejoSyncer(Syncer):
             or edited_repo.clone_url is None
         ):
             raise SyncError("received malformed Forgejo repository")
+
+        self.client.repository.repo_update_topics(
+            owner=edited_repo.owner.login,
+            repo=edited_repo.name,
+            topics=topics,
+        )
+
+        self.logger.info("Updated Forgejo repository %s", edited_repo.full_name)
 
         return SyncedRepository(
             new_owner=edited_repo.owner.login,

@@ -52,6 +52,7 @@ class GithubSyncer(Syncer):
         self: Self,
         from_repo: ForgejoRepository,
         description: str,
+        topics: list[str],
     ) -> SyncedRepository:
         if from_repo.name is None:
             raise SyncError("could not get Forgejo repository name")
@@ -140,7 +141,7 @@ class GithubSyncer(Syncer):
 
         self.logger.info("Updated GitHub repository %s", repo.full_name)
 
-        repo.replace_topics(from_repo.topics if from_repo.topics is not None else [])
+        repo.replace_topics(topics=topics)
 
         self.logger.info("Replaced topics on GitHub repository %s", repo.full_name)
 

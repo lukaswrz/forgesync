@@ -135,9 +135,14 @@ def main() -> None:
         if repo.fork or repo.mirror or repo.private:
             continue
 
-        if repo.name is None:
+        if repo.owner is None or repo.owner.login is None or repo.name is None:
             logger.fatal("Could not get name of Forgejo repository")
             exit(1)
+
+        topics_list = from_client.repository.repo_list_topics(
+            owner=repo.owner.login,
+            repo=repo.name,
+        )
 
         if args.filter is not None:
             pattern = compile(args.filter)
@@ -150,7 +155,11 @@ def main() -> None:
         )
 
         try:
-            synced_repo = syncer.sync(from_repo=repo, description=description)
+            synced_repo = syncer.sync(
+                from_repo=repo,
+                description=description,
+                topics=topics_list.topics if topics_list.topics is not None else [],
+            )
         except SyncError as error:
             logger.fatal("Syncing failed: %s", error)
             exit(2)
