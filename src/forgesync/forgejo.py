@@ -1,7 +1,8 @@
 from logging import Logger
 from typing import Self, override
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
-from .sync import SyncError, SyncedRepository, Syncer
+
+from .sync import SyncError, SyncedRepository, Syncer, Destination
 
 
 class ForgejoSyncer(Syncer):
@@ -10,7 +11,12 @@ class ForgejoSyncer(Syncer):
     repos: dict[str, ForgejoRepository]
     logger: Logger
 
-    def __init__(self: Self, instance: str, token: str, logger: Logger) -> None:
+    def __init__(
+        self: Self,
+        instance: str,
+        token: str,
+        logger: Logger,
+    ) -> None:
         self.client = PyforgejoApi(base_url=instance, api_key=token)
 
         self.user = self.client.user.get_current()
@@ -28,7 +34,9 @@ class ForgejoSyncer(Syncer):
 
     @override
     def sync(
-        self: Self, from_repo: ForgejoRepository, description: str
+        self: Self,
+        from_repo: ForgejoRepository,
+        description: str,
     ) -> SyncedRepository:
         assert from_repo.name is not None
         self.logger.info("Synchronizing %s", from_repo.name)
@@ -44,7 +52,8 @@ class ForgejoSyncer(Syncer):
                 description=description,
                 private=from_repo.private,
             )
-            self.logger.info(f"Created new Forgejo repository %s", new_repo.full_name)
+
+            self.logger.info("Created new Forgejo repository %s", new_repo.full_name)
 
         edited_repo = self.client.repository.repo_edit(
             owner=self.user.login,
@@ -87,4 +96,6 @@ class ForgejoSyncer(Syncer):
             orig_owner=from_repo.owner.login,
             name=edited_repo.name,
             clone_url=edited_repo.clone_url,
+            destination=Destination.FORGEJO,
+            needs_mirror=True,
         )

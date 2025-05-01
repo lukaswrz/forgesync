@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from dataclasses import dataclass, fields
 from logging import Logger
 from typing import Self
 from pyforgejo import PushMirror, PyforgejoApi
@@ -9,20 +10,53 @@ class MirrorError(RuntimeError):
     pass
 
 
+@dataclass
+class PushMirrorConfig:
+    interval: str | None = None
+    remirror: bool | None = None
+    immediate: bool | None = None
+    sync_on_commit: bool | None = None
+
+    def overlay(self, other: Self) -> Self:
+        result = type(self)()
+        for f in fields(self):
+            value = (  # pyright: ignore[reportAny]
+                getattr(other, f.name)
+                if getattr(other, f.name) is not None
+                else getattr(self, f.name)
+            )
+            setattr(result, f.name, value)
+        return result
+
+    def is_valid(self: Self) -> bool:
+        for f in fields(self):
+            if getattr(self, f.name) is None:
+                return False
+
+        return True
+
+
 class PushMirrorer:
     client: PyforgejoApi
+    config: PushMirrorConfig
+    mirror_token: str
     logger: Logger
 
     def __init__(
         self: Self,
         client: PyforgejoApi,
+        config: PushMirrorConfig,
+        mirror_token: str,
         logger: Logger,
     ) -> None:
         self.client = client
+        self.config = config
+        self.mirror_token = mirror_token
         self.logger = logger
 
     def get_matching_mirrors(
-        self: Self, repos: Iterable[SyncedRepository]
+        self: Self,
+        repos: Iterable[SyncedRepository],
     ) -> dict[str, list[PushMirror]]:
         repo_mirrors: dict[str, list[PushMirror]] = {}
 
@@ -47,27 +81,33 @@ class PushMirrorer:
         self: Self,
         repo: SyncedRepository,
         existing_push_mirrors: list[PushMirror],
-        interval: str,
-        remirror: bool,
-        immediate: bool,
-        sync_on_commit: bool,
-        mirror_token: str,
+        config: PushMirrorConfig,
     ) -> PushMirror | None:
+        if not repo.needs_mirror:
+            return None
+
+        self.logger.info(
+            f"Setting up mirrors for {repo.orig_owner}/{repo.name} to {repo.new_owner}/{repo.name} at {repo.clone_url}"
+        )
+
+        final_config = self.config.overlay(config)
+
+        if not final_config.is_valid():
+            raise MirrorError("config is invalid")
+
         def add_push_mirror() -> PushMirror:
             push_mirror = self.client.repository.repo_add_push_mirror(
                 owner=repo.orig_owner,
                 repo=repo.name,
-                interval=interval,
+                interval=final_config.interval,
                 remote_address=repo.clone_url,
                 remote_username=repo.new_owner,
-                remote_password=mirror_token,
-                sync_on_commit=sync_on_commit,
+                remote_password=self.mirror_token,
+                sync_on_commit=final_config.sync_on_commit,
                 use_ssh=False,
             )
 
-            self.logger.info(
-                f"Created push mirror for {repo.orig_owner}/{repo.name} to {repo.new_owner}/{repo.name} at {repo.clone_url}"
-            )
+            self.logger.info("Created push mirror")
 
             return push_mirror
 
@@ -77,16 +117,14 @@ class PushMirrorer:
             if push_mirror.remote_name is None:
                 raise MirrorError("missing remote name")
 
-            if remirror:
+            if final_config.remirror:
                 self.client.repository.repo_delete_push_mirror(
                     owner=repo.orig_owner,
                     repo=repo.name,
                     name=push_mirror.remote_name,
                 )
 
-                self.logger.info(
-                    f"Removed old push mirror for {repo.orig_owner}/{repo.name} to {repo.new_owner}/{repo.name} at {repo.clone_url}"
-                )
+                self.logger.info("Removed old push mirror")
 
                 new_push_mirror = add_push_mirror()
 
@@ -94,7 +132,7 @@ class PushMirrorer:
             new_push_mirror = add_push_mirror()
 
         if new_push_mirror is not None:
-            if immediate:
+            if final_config.immediate:
                 self.client.repository.repo_push_mirror_sync(
                     owner=repo.orig_owner,
                     repo=repo.name,
@@ -105,11 +143,7 @@ class PushMirrorer:
     def mirror_repos(
         self: Self,
         synced_repos: Iterable[SyncedRepository],
-        interval: str,
-        remirror: bool,
-        immediate: bool,
-        sync_on_commit: bool,
-        mirror_token: str,
+        config: PushMirrorConfig,
     ) -> list[PushMirror]:
         new_push_mirrors: list[PushMirror] = []
 
@@ -119,11 +153,7 @@ class PushMirrorer:
             new_push_mirror = self.mirror_repo(
                 repo=synced_repo,
                 existing_push_mirrors=matching_mirrors[synced_repo.name],
-                interval=interval,
-                remirror=remirror,
-                immediate=immediate,
-                sync_on_commit=sync_on_commit,
-                mirror_token=mirror_token,
+                config=config,
             )
 
             if new_push_mirror is not None:

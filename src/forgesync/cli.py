@@ -2,7 +2,6 @@
 Automatically synchronize all your Forgejo repositories to GitHub as well as any Forgejo instance.
 """
 
-from enum import StrEnum
 from logging import Formatter, Logger, StreamHandler
 from os import environ, PathLike
 from sys import stderr
@@ -10,22 +9,17 @@ from tap import Tap
 from xdg_base_dirs import xdg_config_home
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository
 
-from forgesync.sync import SyncError, SyncedRepository
+from .sync import SyncError, SyncedRepository, Destination
 from .github import GithubSyncer
 from .forgejo import ForgejoSyncer
-from .mirror import MirrorError, PushMirrorer
+from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
 from re import compile
-
-
-class ToType(StrEnum):
-    GITHUB = "github"
-    FORGEJO = "forgejo"
 
 
 class ArgumentParser(Tap):
     from_instance: str
     "base URL of the source instance"
-    to: ToType
+    to: Destination
     "what kind of destination to sync to, e.g. 'forgejo' or 'github'"
     to_instance: str
     "base URL of the destination instance"
@@ -99,21 +93,36 @@ def main() -> None:
 
     logger = make_logger(name="forgesync", level=args.log)
 
+    from_client = PyforgejoApi(base_url=args.from_instance, api_key=from_token)
+
+    push_mirror_config = PushMirrorConfig(
+        interval=args.mirror_interval,
+        remirror=args.remirror,
+        immediate=args.immediate,
+        sync_on_commit=args.sync_on_commit,
+    )
+
+    push_mirrorer = PushMirrorer(
+        client=from_client,
+        config=push_mirror_config,
+        mirror_token=mirror_token,
+        logger=logger,
+    )
+
     match args.to:
-        case ToType.GITHUB:
+        case Destination.GITHUB:
             syncer = GithubSyncer(
                 instance=args.to_instance,
                 token=to_token,
+                push_mirrorer=push_mirrorer,
                 logger=logger,
             )
-        case ToType.FORGEJO:
+        case Destination.FORGEJO:
             syncer = ForgejoSyncer(
                 instance=args.to_instance,
                 token=to_token,
                 logger=logger,
             )
-
-    from_client = PyforgejoApi(base_url=args.from_instance, api_key=from_token)
 
     from_user = from_client.user.get_current()
     if from_user.login is None:
@@ -148,19 +157,10 @@ def main() -> None:
 
         synced_repos.append(synced_repo)
 
-    push_mirrorer = PushMirrorer(
-        client=from_client,
-        logger=logger,
-    )
-
     try:
         _ = push_mirrorer.mirror_repos(
             synced_repos=synced_repos,
-            interval=args.mirror_interval,
-            remirror=args.remirror,
-            immediate=args.immediate,
-            sync_on_commit=args.sync_on_commit,
-            mirror_token=mirror_token,
+            config=push_mirror_config,
         )
     except MirrorError as error:
         logger.fatal("Mirroring failed: %s", error)
