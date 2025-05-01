@@ -29,7 +29,7 @@ class ArgumentParser(Tap):
     "whether mirrors should be recreated"
     mirror_interval: str = "8h0m0s"
     "repository mirror interval"
-    log: str = "WARNING"
+    log: str = "INFO"
     "log level"
     filter: str | None = None
     "filter repositories by this regular expression"

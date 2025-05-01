@@ -83,12 +83,13 @@ class PushMirrorer:
         existing_push_mirrors: list[PushMirror],
         config: PushMirrorConfig,
     ) -> PushMirror | None:
-        if not repo.needs_mirror:
-            return None
-
         self.logger.info(
             f"Setting up mirrors for {repo.orig_owner}/{repo.name} to {repo.new_owner}/{repo.name} at {repo.clone_url}"
         )
+
+        if not repo.needs_mirror:
+            self.logger.info("Skipping mirrors")
+            return None
 
         final_config = self.config.overlay(config)
 
@@ -137,6 +138,8 @@ class PushMirrorer:
                     owner=repo.orig_owner,
                     repo=repo.name,
                 )
+
+        self.logger.info("Finished mirrors")
 
         return new_push_mirror
 
