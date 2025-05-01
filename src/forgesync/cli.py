@@ -31,8 +31,10 @@ class ArgumentParser(Tap):
     "repository mirror interval"
     log: str = "INFO"
     "log level"
-    filter: str | None = None
-    "filter repositories by this regular expression"
+    include: str | None = None
+    "include repositories by this regular expression"
+    exclude: str | None = None
+    "exclude repositories by this regular expression"
     immediate: bool = False
     "tell Forgejo to mirror Git repositories immediately"
     sync_on_commit: bool = False
@@ -144,8 +146,13 @@ def main() -> None:
             repo=repo.name,
         )
 
-        if args.filter is not None:
-            pattern = compile(args.filter)
+        if args.include is not None:
+            pattern = compile(args.include)
+            if pattern.search(repo.name) is None:
+                continue
+
+        if args.exclude is not None:
+            pattern = compile(args.exclude)
             if pattern.search(repo.name) is not None:
                 continue
 
