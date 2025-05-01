@@ -52,7 +52,7 @@ def get_config_files() -> list[str | PathLike[str]]:
 def make_description(template: str, repo: ForgejoRepository) -> str:
     return template.format(
         description=repo.description,
-        url=repo.url,
+        url=repo.html_url,
         website=repo.website,
         full_name=repo.full_name,
         clone_url=repo.clone_url,
