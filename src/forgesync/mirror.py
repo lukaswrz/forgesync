@@ -17,7 +17,7 @@ class PushMirrorConfig:
     immediate: bool | None = None
     sync_on_commit: bool | None = None
 
-    def overlay(self, other: Self) -> Self:
+    def overlay(self: Self, other: Self) -> Self:
         result = type(self)()
         for f in fields(self):
             value = (  # pyright: ignore[reportAny]
