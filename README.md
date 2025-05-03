@@ -68,7 +68,7 @@ Your `TO_TOKEN` must have:
 
 ### Mirror Token
 
-The mirror token only needs:
+The `MIRROR_TOKEN` only needs:
 
 * **Repository:** read + write
 
