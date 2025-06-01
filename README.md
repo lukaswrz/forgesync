@@ -57,14 +57,14 @@ Not yet.
 Your `FROM_TOKEN` must have:
 
 * **Repository:** read + write
-* **User data:** read
+* **User data:** read + write
 
 ### Destination (GitHub or Forgejo)
 
 Your `TO_TOKEN` must have:
 
 * **Repository:** read + write  
-* **User data:** read
+* **User data:** read + write
 
 ### Mirror Token
 
