@@ -4,6 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    treefmt = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,42 +29,70 @@
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-parts,
-    uv2nix,
-    pyproject-nix,
-    pyproject-build-systems,
-    ...
-  } @ inputs: let
-    workspace = uv2nix.lib.workspace.loadWorkspace {workspaceRoot = ./.;};
-    overlay = workspace.mkPyprojectOverlay {
-      sourcePreference = "wheel";
-    };
-  in
-    flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["x86_64-linux" "aarch64-linux"];
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-parts,
+      hooks,
+      treefmt,
+      uv2nix,
+      pyproject-nix,
+      pyproject-build-systems,
+      ...
+    }@inputs:
+    let
+      workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
+      overlay = workspace.mkPyprojectOverlay {
+        sourcePreference = "wheel";
+      };
+    in
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        hooks.flakeModule
+        treefmt.flakeModule
+      ];
 
-      perSystem = {
-        pkgs,
-        inputs',
-        lib,
-        ...
-      }: let
-        python = pkgs.python313;
-        pythonSet =
-          (pkgs.callPackage pyproject-nix.build.packages {
-            inherit python;
-          }).overrideScope
-          (
-            lib.composeManyExtensions [
-              pyproject-build-systems.overlays.default
-              overlay
-            ]
-          );
-      in {
-        devShells.default = pkgs.mkShell {
+      systems = nixpkgs.lib.systems.flakeExposed;
+
+      perSystem =
+        {
+          config,
+          pkgs,
+          inputs',
+          lib,
+          ...
+        }:
+        let
+          python = pkgs.python313;
+          pythonSet =
+            (pkgs.callPackage pyproject-nix.build.packages {
+              inherit python;
+            }).overrideScope
+              (
+                lib.composeManyExtensions [
+                  pyproject-build-systems.overlays.default
+                  overlay
+                ]
+              );
+        in
+        {
+          treefmt = {
+            projectRootFile = "flake.nix";
+
+            programs.nixfmt = {
+              enable = true;
+              package = pkgs.nixfmt-rfc-style;
+            };
+
+            programs.ruff.enable = true;
+          };
+
+          pre-commit.settings.hooks = {
+            treefmt.enable = true;
+          };
+
+          devShells.default = pkgs.mkShell {
             packages = [
               python
               pkgs.libffi
@@ -71,11 +107,14 @@
                 LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
               };
             shellHook = ''
+              ${config.pre-commit.installationScript}
               unset PYTHONPATH
             '';
           };
 
-        packages.default = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
-      };
+          packages.default = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
+        };
+
+      flake.nixosModules.default = import ./module.nix self;
     };
 }

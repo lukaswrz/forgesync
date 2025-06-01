@@ -20,11 +20,9 @@ class PushMirrorConfig:
     def overlay(self: Self, other: Self) -> Self:
         result = type(self)()
         for f in fields(self):
-            value = (  # pyright: ignore[reportAny]
-                getattr(other, f.name)
-                if getattr(other, f.name) is not None
-                else getattr(self, f.name)
-            )
+            other_attr = getattr(other, f.name)  # pyright: ignore[reportAny]
+            self_attr = getattr(self, f.name)  # pyright: ignore[reportAny]
+            value = other_attr if other_attr is not None else self_attr  # pyright: ignore[reportAny]
             setattr(result, f.name, value)
         return result
 
