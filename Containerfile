@@ -11,7 +11,7 @@ WORKDIR /usr/src
 COPY . .
 
 RUN uv build --all-packages && uv run --compile-bytecode forgesync || true 
-RUN echo 'uv run --no-sync --directory /usr/src/ forgesync' > /usr/bin/forgesync && chmod +x /usr/bin/forgesync
+RUN echo -e  '#!/bin/sh\n\nuv run --no-sync --directory /usr/src/ forgesync $@' > /usr/bin/forgesync && chmod +x /usr/bin/forgesync
 
 ENTRYPOINT /usr/bin/forgesync
 
