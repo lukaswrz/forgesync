@@ -41,6 +41,39 @@ forgesync \
   --log INFO
 ```
 
+## 📦 Container usage
+
+Alternatively, forgesync can also be ran in a container with podman, docker, kubernetes, etc.
+
+### Building the container
+
+Build with your favorite image building tool (podman, buildah, docker, etc.):
+
+```
+podman build -t localhost/forgesync .
+```
+
+### Running the container
+
+The FROM_TOKEN, TO_TOKEN, and MIRROR_TOKEN tokens must be passed to the container at run-time (`-e` for podman/docker, or as a Kubernetes secret).
+
+Example with podman:
+
+```
+podman run --rm -it \
+  -e FROM_TOKEN=my_forgejo_token \
+  -e TO_TOKEN=my_github_token \
+  -e MIRROR_TOKEN=my_github_mirror_roken \
+  localhost/forgesync \
+    --from-instance https://codeberg.org/api/v1 \
+    --to github \
+    --to-instance https://api.github.com \
+    --remirror \
+    --mirror-interval 8h0m0s \
+    --immediate \
+    --log INFO
+```
+
 ## ❄️ Usage as a NixOS module
 
 Not yet.
