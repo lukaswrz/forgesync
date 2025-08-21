@@ -41,7 +41,7 @@ class PushMirrorer:
             "Setting up mirroring for %s to %s at %s",
             f"{synced_repo.orig_owner}/{synced_repo.name}",
             f"{synced_repo.new_owner}/{synced_repo.name}",
-            f"{synced_repo.clone_url}",
+            synced_repo.clone_url,
         )
 
         new_push_mirror: PushMirror | None = None
