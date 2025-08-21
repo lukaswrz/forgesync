@@ -1,3 +1,4 @@
+from dataclasses import replace
 from logging import Logger
 from typing import Self, override
 from github.AuthenticatedUser import AuthenticatedUser
@@ -8,7 +9,14 @@ from github import Github, Auth as GithubAuth
 from pyforgejo import Repository as ForgejoRepository
 
 from .mirror import PushMirrorConfig, PushMirrorer
-from .sync import SyncError, SyncedRepository, Syncer, Destination
+from .sync import (
+    RepoError,
+    SyncError,
+    RepoSkippedError,
+    SyncedRepository,
+    Syncer,
+    Destination,
+)
 
 
 class GithubSyncer(Syncer):
@@ -16,6 +24,7 @@ class GithubSyncer(Syncer):
     user: AuthenticatedUser
     repos: dict[str, GithubRepository]
     push_mirrorer: PushMirrorer
+    push_mirror_config: PushMirrorConfig
     logger: Logger
 
     def __init__(
@@ -23,6 +32,7 @@ class GithubSyncer(Syncer):
         instance: str,
         token: str,
         push_mirrorer: PushMirrorer,
+        push_mirror_config: PushMirrorConfig,
         logger: Logger,
     ) -> None:
         auth = GithubAuth.Token(token)
@@ -35,7 +45,7 @@ class GithubSyncer(Syncer):
 
         user = self.client.get_user()
         if not isinstance(user, AuthenticatedUser):
-            raise SyncError("user must be authenticated")
+            raise SyncError("User must be authenticated")
 
         self.user = user
 
@@ -44,6 +54,7 @@ class GithubSyncer(Syncer):
             self.repos[repo.name] = repo
 
         self.push_mirrorer = push_mirrorer
+        self.push_mirror_config = push_mirror_config
 
         self.logger = logger
 
@@ -55,27 +66,20 @@ class GithubSyncer(Syncer):
         topics: list[str],
     ) -> SyncedRepository:
         if from_repo.name is None:
-            raise SyncError("could not get Forgejo repository name")
+            raise RepoError("Cannot get source repository name")
 
-        self.logger.info("Synchronizing %s", from_repo.name)
+        self.logger.info("Synchronizing %s/%s", self.user.login, from_repo.name)
 
-        needs_mirror = True
-
-        def make_synced(repo: GithubRepository) -> SyncedRepository:
-            if from_repo.owner is None or from_repo.owner.login is None:
-                raise SyncError("received malformed repository")
-
-            return SyncedRepository(
-                new_owner=repo.owner.login,
-                orig_owner=from_repo.owner.login,
-                name=repo.name,
-                clone_url=repo.clone_url,
-                destination=Destination.GITHUB,
-                needs_mirror=True,
-            )
+        mirrored = False
 
         if from_repo.name in self.repos:
             repo = self.repos[from_repo.name]
+
+            if repo.archived:
+                raise RepoSkippedError("Destination repository is archived")
+
+            if repo.fork:
+                raise RepoSkippedError("Destination repository is a fork")
         else:
             repo = self.user.create_repo(
                 auto_init=False,
@@ -100,26 +104,20 @@ class GithubSyncer(Syncer):
                 repo.name,
             )
 
-            synced_repo = make_synced(repo=repo)
-
-            existing_push_mirrors = self.push_mirrorer.get_matching_mirrors(
-                repos=[synced_repo]
-            )[synced_repo.name]
+            synced_repo = self.make_synced(from_repo=from_repo, repo=repo)
 
             push_mirror = self.push_mirrorer.mirror_repo(
-                repo=synced_repo,
-                existing_push_mirrors=existing_push_mirrors,
-                config=PushMirrorConfig(
+                synced_repo=synced_repo,
+                config=replace(
+                    self.push_mirror_config,
                     remirror=True,
                     immediate=True,
                 ),
             )
             if push_mirror is None:
-                raise SyncError(f"Could not mirror new repository {repo.full_name}")
+                raise RepoError(f"Could not mirror new repository {repo.full_name}")
 
-            needs_mirror = False
-
-        repo.git_tags_url
+            mirrored = True
 
         repo.edit(
             name=from_repo.name,
@@ -145,8 +143,23 @@ class GithubSyncer(Syncer):
 
         self.logger.info("Replaced topics on GitHub repository %s", repo.full_name)
 
-        synced_repo = make_synced(repo=repo)
+        synced_repo = self.make_synced(from_repo=from_repo, repo=repo)
 
-        synced_repo.needs_mirror = needs_mirror
+        synced_repo.mirrored = mirrored
 
         return synced_repo
+
+    def make_synced(
+        self: Self, from_repo: ForgejoRepository, repo: GithubRepository
+    ) -> SyncedRepository:
+        if from_repo.owner is None or from_repo.owner.login is None:
+            raise RepoError("Cannot get GitHub reposiory owner")
+
+        return SyncedRepository(
+            new_owner=repo.owner.login,
+            orig_owner=from_repo.owner.login,
+            name=repo.name,
+            clone_url=repo.clone_url,
+            destination=Destination.GITHUB,
+            mirrored=False,
+        )

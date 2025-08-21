@@ -9,7 +9,7 @@ from tap import Tap
 from xdg_base_dirs import xdg_config_home
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository
 
-from .sync import SyncError, SyncedRepository, Destination
+from .sync import RepoError, RepoSkippedError, SyncError, Destination
 from .github import GithubSyncer
 from .forgejo import ForgejoSyncer
 from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
@@ -83,17 +83,17 @@ def get_args() -> ArgumentParser:
 
 
 def main() -> None:
+    args = get_args()
+
+    logger = make_logger(name="forgesync", level=args.log)
+
     try:
         from_token = environ["FROM_TOKEN"]
         to_token = environ["TO_TOKEN"]
         mirror_token = environ["MIRROR_TOKEN"]
     except KeyError as e:
-        print(f"Missing token: {e}", file=stderr)
+        logger.fatal("Missing token: %s", e)
         exit(1)
-
-    args = get_args()
-
-    logger = make_logger(name="forgesync", level=args.log)
 
     from_client = PyforgejoApi(base_url=args.from_instance, api_key=from_token)
 
@@ -106,7 +106,6 @@ def main() -> None:
 
     push_mirrorer = PushMirrorer(
         client=from_client,
-        config=push_mirror_config,
         mirror_token=mirror_token,
         logger=logger,
     )
@@ -117,6 +116,7 @@ def main() -> None:
                 instance=args.to_instance,
                 token=to_token,
                 push_mirrorer=push_mirrorer,
+                push_mirror_config=push_mirror_config,
                 logger=logger,
             )
         case Destination.FORGEJO:
@@ -132,7 +132,6 @@ def main() -> None:
         exit(1)
 
     from_repos = from_client.user.list_repos(from_user.login)
-    synced_repos: list[SyncedRepository] = []
     for repo in from_repos:
         if repo.fork or repo.mirror or repo.private:
             continue
@@ -167,17 +166,22 @@ def main() -> None:
                 description=description,
                 topics=topics_list.topics if topics_list.topics is not None else [],
             )
+        except RepoSkippedError as error:
+            logger.warning("Repository %s skipped: %s", repo.name, error)
+            continue
+        except RepoError as error:
+            logger.warning("Syncing repository %s failed: %s", repo.name, error)
+            continue
         except SyncError as error:
-            logger.fatal("Syncing failed: %s", error)
+            logger.fatal("Syncing repository %s failed: %s", repo.name, error)
             exit(2)
 
-        synced_repos.append(synced_repo)
-
-    try:
-        _ = push_mirrorer.mirror_repos(
-            synced_repos=synced_repos,
-            config=push_mirror_config,
-        )
-    except MirrorError as error:
-        logger.fatal("Mirroring failed: %s", error)
-        exit(3)
+        if not synced_repo.mirrored:
+            try:
+                _ = push_mirrorer.mirror_repo(
+                    synced_repo=synced_repo,
+                    config=push_mirror_config,
+                )
+            except MirrorError as error:
+                logger.warning("Mirroring failed: %s", error)
+                continue

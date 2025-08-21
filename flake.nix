@@ -85,7 +85,8 @@
               package = pkgs.nixfmt-rfc-style;
             };
 
-            programs.ruff.enable = true;
+            programs.ruff-check.enable = true;
+            programs.ruff-format.enable = true;
           };
 
           pre-commit.settings.hooks = {
@@ -98,14 +99,13 @@
               pkgs.libffi
               pkgs.uv
             ];
-            env =
-              {
-                UV_PYTHON_DOWNLOADS = "never";
-                UV_PYTHON = python.interpreter;
-              }
-              // lib.optionalAttrs pkgs.stdenv.isLinux {
-                LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
-              };
+            env = {
+              UV_PYTHON_DOWNLOADS = "never";
+              UV_PYTHON = python.interpreter;
+            }
+            // lib.optionalAttrs pkgs.stdenv.isLinux {
+              LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
+            };
             shellHook = ''
               ${config.pre-commit.installationScript}
               unset PYTHONPATH

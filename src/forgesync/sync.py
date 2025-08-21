@@ -17,7 +17,7 @@ class SyncedRepository:
     name: str
     clone_url: str
     destination: Destination
-    needs_mirror: bool
+    mirrored: bool
 
 
 class Syncer(ABC):
@@ -32,4 +32,12 @@ class Syncer(ABC):
 
 
 class SyncError(RuntimeError):
+    pass
+
+
+class RepoError(SyncError):
+    pass
+
+
+class RepoSkippedError(RepoError):
     pass

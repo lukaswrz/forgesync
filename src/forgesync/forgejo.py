@@ -2,7 +2,14 @@ from logging import Logger
 from typing import Self, override
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
 
-from .sync import SyncError, SyncedRepository, Syncer, Destination
+from .sync import (
+    RepoError,
+    RepoSkippedError,
+    SyncError,
+    SyncedRepository,
+    Syncer,
+    Destination,
+)
 
 
 class ForgejoSyncer(Syncer):
@@ -22,7 +29,7 @@ class ForgejoSyncer(Syncer):
         self.user = self.client.user.get_current()
 
         if self.user.login is None:
-            raise SyncError("could not get username from Forgejo")
+            raise SyncError("Could not get username from Forgejo")
 
         self.repos = {}
         for repo in self.client.user.list_repos(self.user.login):
@@ -39,13 +46,23 @@ class ForgejoSyncer(Syncer):
         description: str,
         topics: list[str],
     ) -> SyncedRepository:
-        assert from_repo.name is not None
-        self.logger.info("Synchronizing %s", from_repo.name)
-
         if self.user.login is None:
-            raise SyncError("could not get username from Forgejo")
+            raise SyncError("Cannot get username from Forgejo")
 
-        if from_repo.name not in self.repos:
+        if from_repo.name is None:
+            raise RepoError("Cannot get Forgejo repository name")
+
+        self.logger.info("Synchronizing %s/%s", self.user.login, from_repo.name)
+
+        if from_repo.name in self.repos:
+            existing_repo = self.repos[from_repo.name]
+
+            if existing_repo.archived:
+                raise RepoSkippedError("Destination repository is archived")
+
+            if existing_repo.fork:
+                raise RepoSkippedError("Destination repository is a fork")
+        else:
             new_repo = self.client.repository.create_current_user_repo(
                 name=from_repo.name,
                 auto_init=False,
@@ -88,7 +105,7 @@ class ForgejoSyncer(Syncer):
             or edited_repo.name is None
             or edited_repo.clone_url is None
         ):
-            raise SyncError("received malformed Forgejo repository")
+            raise RepoError("Received malformed Forgejo repository")
 
         self.client.repository.repo_update_topics(
             owner=edited_repo.owner.login,
@@ -104,5 +121,5 @@ class ForgejoSyncer(Syncer):
             name=edited_repo.name,
             clone_url=edited_repo.clone_url,
             destination=Destination.FORGEJO,
-            needs_mirror=True,
+            mirrored=False,
         )
