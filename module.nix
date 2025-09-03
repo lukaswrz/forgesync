@@ -31,7 +31,7 @@ in
                 from-instance = "https://codeberg.org/api/v1";
                 to = "github";
                 to-instance = "https://api.github.com";
-                remirror = true;
+                remirror = "always";
                 description-template = "{description} (Mirror of {url})";
                 mirror-interval = "8h0m0s";
                 immediate = true;

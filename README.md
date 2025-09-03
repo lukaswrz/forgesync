@@ -37,7 +37,7 @@ forgesync \
   --from-instance https://codeberg.org/api/v1 \
   --to github \
   --to-instance https://api.github.com \
-  --remirror \
+  --remirror aways \
   --mirror-interval 8h0m0s \
   --immediate \
   --log INFO
@@ -70,7 +70,7 @@ podman run --rm -it \
     --from-instance https://codeberg.org/api/v1 \
     --to github \
     --to-instance https://api.github.com \
-    --remirror \
+    --remirror aways \
     --mirror-interval 8h0m0s \
     --immediate \
     --log INFO

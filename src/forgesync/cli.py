@@ -4,6 +4,7 @@ Automatically synchronize all your Forgejo repositories to GitHub as well as any
 
 from logging import Formatter, Logger, StreamHandler
 from os import environ, PathLike
+from re import search
 from sys import stderr
 from tap import Tap
 from xdg_base_dirs import xdg_config_home
@@ -13,7 +14,7 @@ from .sync import RepoError, RepoSkippedError, SyncError, Destination
 from .github import GithubSyncer
 from .forgejo import ForgejoSyncer
 from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
-from re import compile
+from .remirror import should_remirror
 
 
 class ArgumentParser(Tap):
@@ -25,8 +26,8 @@ class ArgumentParser(Tap):
     "base URL of the destination instance"
     description_template: str = "{description} (Mirror of {url})"
     "the repository description template"
-    remirror: bool = False
-    "whether mirrors should be recreated"
+    remirror: str = "never"
+    "when mirrors should be recreated"
     mirror_interval: str = "8h0m0s"
     "repository mirror interval"
     log: str = "INFO"
@@ -99,7 +100,7 @@ def main() -> None:
 
     push_mirror_config = PushMirrorConfig(
         interval=args.mirror_interval,
-        remirror=args.remirror,
+        remirror=should_remirror(rule=args.remirror),
         immediate=args.immediate,
         sync_on_commit=args.sync_on_commit,
     )
@@ -145,15 +146,11 @@ def main() -> None:
             repo=repo.name,
         )
 
-        if args.include is not None:
-            pattern = compile(args.include)
-            if pattern.search(repo.name) is None:
-                continue
+        if args.include is not None and search(args.include, repo.name) is None:
+            continue
 
-        if args.exclude is not None:
-            pattern = compile(args.exclude)
-            if pattern.search(repo.name) is not None:
-                continue
+        if args.exclude is not None and search(args.exclude, repo.name) is not None:
+            continue
 
         description = make_description(
             template=args.description_template,
