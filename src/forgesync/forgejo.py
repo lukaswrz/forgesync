@@ -3,8 +3,9 @@ from typing import Self, override
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
 
 from .sync import (
-    RepoError,
-    RepoSkippedError,
+    RepositoryError,
+    RepositoryFeature,
+    RepositorySkippedError,
     SyncError,
     SyncedRepository,
     Syncer,
@@ -16,17 +17,21 @@ class ForgejoSyncer(Syncer):
     client: PyforgejoApi
     user: ForgejoUser
     repos: dict[str, ForgejoRepository]
+    features: list[RepositoryFeature]
     logger: Logger
 
     def __init__(
         self: Self,
         instance: str,
         token: str,
+        features: list[RepositoryFeature],
         logger: Logger,
     ) -> None:
         self.client = PyforgejoApi(base_url=instance, api_key=token)
 
         self.user = self.client.user.get_current()
+
+        self.features = features
 
         if self.user.login is None:
             raise SyncError("Could not get username from Forgejo")
@@ -50,7 +55,7 @@ class ForgejoSyncer(Syncer):
             raise SyncError("Cannot get username from Forgejo")
 
         if from_repo.name is None:
-            raise RepoError("Cannot get Forgejo repository name")
+            raise RepositoryError("Cannot get Forgejo repository name")
 
         self.logger.info("Synchronizing %s/%s", self.user.login, from_repo.name)
 
@@ -58,10 +63,10 @@ class ForgejoSyncer(Syncer):
             existing_repo = self.repos[from_repo.name]
 
             if existing_repo.archived:
-                raise RepoSkippedError("Destination repository is archived")
+                raise RepositorySkippedError("Destination repository is archived")
 
             if existing_repo.fork:
-                raise RepoSkippedError("Destination repository is a fork")
+                raise RepositorySkippedError("Destination repository is a fork")
         else:
             new_repo = self.client.repository.create_current_user_repo(
                 name=from_repo.name,
@@ -82,13 +87,13 @@ class ForgejoSyncer(Syncer):
             external_tracker=None,
             external_wiki=None,
             globally_editable_wiki=None,
-            has_actions=False,
-            has_issues=False,
-            has_packages=False,
-            has_projects=False,
-            has_pull_requests=False,
-            has_releases=False,
-            has_wiki=False,
+            has_actions=RepositoryFeature.ACTIONS in self.features,
+            has_issues=RepositoryFeature.ISSUES in self.features,
+            has_packages=RepositoryFeature.PACKAGES in self.features,
+            has_projects=RepositoryFeature.PROJECTS in self.features,
+            has_pull_requests=RepositoryFeature.PULL_REQUESTS in self.features,
+            has_releases=RepositoryFeature.RELEASES in self.features,
+            has_wiki=RepositoryFeature.WIKI in self.features,
             internal_tracker=None,
             name=from_repo.name,
             private=from_repo.private,
@@ -105,7 +110,7 @@ class ForgejoSyncer(Syncer):
             or edited_repo.name is None
             or edited_repo.clone_url is None
         ):
-            raise RepoError("Received malformed Forgejo repository")
+            raise RepositoryError("Received malformed Forgejo repository")
 
         self.client.repository.repo_update_topics(
             owner=edited_repo.owner.login,

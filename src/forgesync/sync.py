@@ -10,6 +10,17 @@ class Destination(StrEnum):
     FORGEJO = "forgejo"
 
 
+class RepositoryFeature(StrEnum):
+    ACTIONS = "actions"
+    DISCUSSIONS = "discussions"
+    ISSUES = "issues"
+    PACKAGES = "packages"
+    PROJECTS = "projects"
+    PULL_REQUESTS = "pull-requests"
+    RELEASES = "releases"
+    WIKI = "wiki"
+
+
 @dataclass
 class SyncedRepository:
     new_owner: str
@@ -35,9 +46,9 @@ class SyncError(RuntimeError):
     pass
 
 
-class RepoError(SyncError):
+class RepositoryError(SyncError):
     pass
 
 
-class RepoSkippedError(RepoError):
+class RepositorySkippedError(RepositoryError):
     pass

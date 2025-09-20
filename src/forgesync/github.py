@@ -10,9 +10,10 @@ from pyforgejo import Repository as ForgejoRepository
 
 from .mirror import PushMirrorConfig, PushMirrorer
 from .sync import (
-    RepoError,
+    RepositoryError,
+    RepositoryFeature,
     SyncError,
-    RepoSkippedError,
+    RepositorySkippedError,
     SyncedRepository,
     Syncer,
     Destination,
@@ -23,17 +24,19 @@ class GithubSyncer(Syncer):
     client: Github
     user: AuthenticatedUser
     repos: dict[str, GithubRepository]
+    logger: Logger
+    features: list[RepositoryFeature]
     push_mirrorer: PushMirrorer
     push_mirror_config: PushMirrorConfig
-    logger: Logger
 
     def __init__(
         self: Self,
         instance: str,
         token: str,
+        features: list[RepositoryFeature],
+        logger: Logger,
         push_mirrorer: PushMirrorer,
         push_mirror_config: PushMirrorConfig,
-        logger: Logger,
     ) -> None:
         auth = GithubAuth.Token(token)
 
@@ -48,6 +51,8 @@ class GithubSyncer(Syncer):
             raise SyncError("User must be authenticated")
 
         self.user = user
+
+        self.features = features
 
         self.repos = {}
         for repo in self.user.get_repos():
@@ -66,7 +71,7 @@ class GithubSyncer(Syncer):
         topics: list[str],
     ) -> SyncedRepository:
         if from_repo.name is None:
-            raise RepoError("Cannot get source repository name")
+            raise RepositoryError("Cannot get source repository name")
 
         self.logger.info("Synchronizing %s/%s", self.user.login, from_repo.name)
 
@@ -76,22 +81,22 @@ class GithubSyncer(Syncer):
             repo = self.repos[from_repo.name]
 
             if repo.archived:
-                raise RepoSkippedError("Destination repository is archived")
+                raise RepositorySkippedError("Destination repository is archived")
 
             if repo.fork:
-                raise RepoSkippedError("Destination repository is a fork")
+                raise RepositorySkippedError("Destination repository is a fork")
         else:
             repo = self.user.create_repo(
                 auto_init=False,
-                has_downloads=False,
                 name=from_repo.name,
                 description=description,
                 homepage=from_repo.website if from_repo.website is not None else NotSet,
                 private=from_repo.private if from_repo.private is not None else NotSet,
-                has_issues=False,
-                has_projects=False,
-                has_wiki=False,
-                has_discussions=False,
+                has_issues=RepositoryFeature.ISSUES in self.features,
+                has_projects=RepositoryFeature.PROJECTS in self.features,
+                has_wiki=RepositoryFeature.WIKI in self.features,
+                has_discussions=RepositoryFeature.DISCUSSIONS in self.features,
+                has_downloads=False,
             )
 
             self.logger.info("Created new GitHub repository %s", repo.full_name)
@@ -115,7 +120,9 @@ class GithubSyncer(Syncer):
                 ),
             )
             if push_mirror is None:
-                raise RepoError(f"Could not mirror new repository {repo.full_name}")
+                raise RepositoryError(
+                    f"Could not mirror new repository {repo.full_name}"
+                )
 
             mirrored = True
 
@@ -124,10 +131,10 @@ class GithubSyncer(Syncer):
             description=description,
             homepage=from_repo.website if from_repo.website is not None else NotSet,
             private=from_repo.private if from_repo.private is not None else NotSet,
-            has_issues=False,
-            has_projects=False,
-            has_wiki=False,
-            has_discussions=False,
+            has_issues=RepositoryFeature.ISSUES in self.features,
+            has_projects=RepositoryFeature.PROJECTS in self.features,
+            has_wiki=RepositoryFeature.WIKI in self.features,
+            has_discussions=RepositoryFeature.DISCUSSIONS in self.features,
             is_template=from_repo.template
             if from_repo.template is not None
             else NotSet,
@@ -153,7 +160,7 @@ class GithubSyncer(Syncer):
         self: Self, from_repo: ForgejoRepository, repo: GithubRepository
     ) -> SyncedRepository:
         if from_repo.owner is None or from_repo.owner.login is None:
-            raise RepoError("Cannot get GitHub reposiory owner")
+            raise RepositoryError("Cannot get GitHub reposiory owner")
 
         return SyncedRepository(
             new_owner=repo.owner.login,

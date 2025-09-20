@@ -6,11 +6,18 @@ from logging import Formatter, Logger, StreamHandler
 from os import environ, PathLike
 from re import search
 from sys import stderr
+from typing import Self, override
 from tap import Tap
 from xdg_base_dirs import xdg_config_home
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository
 
-from .sync import RepoError, RepoSkippedError, SyncError, Destination
+from .sync import (
+    RepositoryError,
+    RepositoryFeature,
+    RepositorySkippedError,
+    SyncError,
+    Destination,
+)
 from .github import GithubSyncer
 from .forgejo import ForgejoSyncer
 from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
@@ -40,6 +47,13 @@ class ArgumentParser(Tap):
     "tell Forgejo to mirror Git repositories immediately"
     sync_on_commit: bool = False
     "tell Forgejo to sync as soon as commits are pushed"
+    feature: list[RepositoryFeature] = []
+    "allow a repository feature"
+
+    @override
+    def configure(self: Self):
+        super().configure()
+        self.add_argument("--feature", action="append")  # pyright: ignore[reportUnknownMemberType]
 
 
 def get_config_files() -> list[str | PathLike[str]]:
@@ -116,14 +130,16 @@ def main() -> None:
             syncer = GithubSyncer(
                 instance=args.to_instance,
                 token=to_token,
+                features=args.feature,
+                logger=logger,
                 push_mirrorer=push_mirrorer,
                 push_mirror_config=push_mirror_config,
-                logger=logger,
             )
         case Destination.FORGEJO:
             syncer = ForgejoSyncer(
                 instance=args.to_instance,
                 token=to_token,
+                features=args.feature,
                 logger=logger,
             )
 
@@ -163,10 +179,10 @@ def main() -> None:
                 description=description,
                 topics=topics_list.topics if topics_list.topics is not None else [],
             )
-        except RepoSkippedError as error:
+        except RepositorySkippedError as error:
             logger.warning("Repository %s skipped: %s", repo.name, error)
             continue
-        except RepoError as error:
+        except RepositoryError as error:
             logger.warning("Syncing repository %s failed: %s", repo.name, error)
             continue
         except SyncError as error:
