@@ -14,7 +14,7 @@ While Forgejo supports periodic Git mirroring out of the box, setting these mirr
 
 Forgesync is currently available as:
 
-* A Nix package provided as part of this Nix flake. To use it in an ephemeral shell, run `nix shell git+https://forgejo.helveticanonstandard.net/helvetica/forgesync.git`.
+* A Nix package provided as part of this Nix flake. To use it in an ephemeral shell, run `nix shell git+https://hack.helveticanonstandard.net/helvetica/forgesync.git`.
 * A (currently experimental) NixOS module. Check the [module source](module.nix).
 * A container. See [container usage](#container-usage).
 
