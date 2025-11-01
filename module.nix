@@ -137,7 +137,7 @@ in
                   args =
                     (lib.optionals (job.inhibit != [ ]) inhibitArgs)
                     ++ [ (lib.getExe cfg.package) ]
-                    ++ (lib.cli.toGNUCommandLine { mkOptionName = k: "--${k}"; } job.settings);
+                    ++ (lib.cli.toCommandLineGNU { isLong = _: true; } job.settings);
                 in
                 utils.escapeSystemdExecArgs args;
 
