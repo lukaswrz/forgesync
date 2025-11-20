@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
     "pyforgejo==2.0.*",
-    "pygithub==2.6.*",
-    "typed-argument-parser==1.10.*",
+    "pygithub==2.8.*",
+    "typed-argument-parser==1.11.*",
     "xdg-base-dirs==6.0.*",
 ]
 
