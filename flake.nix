@@ -1,5 +1,5 @@
 {
-  description = "forgesync";
+  description = "Automatically mirror all your Forgejo repositories to GitHub or any Forgejo instance";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -71,7 +71,7 @@
             }).overrideScope
               (
                 lib.composeManyExtensions [
-                  pyproject-build-systems.overlays.default
+                  pyproject-build-systems.overlays.wheel
                   overlay
                 ]
               );
@@ -100,6 +100,7 @@
               pkgs.uv
             ];
             env = {
+              UV_NO_SYNC = "1";
               UV_PYTHON_DOWNLOADS = "never";
               UV_PYTHON = python.interpreter;
             }
@@ -112,7 +113,17 @@
             '';
           };
 
-          packages.default = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
+          packages = {
+            venv = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
+            default =
+              let
+                inherit (pkgs.callPackages pyproject-nix.build.util { }) mkApplication;
+              in
+              mkApplication {
+                venv = config.packages.venv;
+                package = pythonSet.forgesync;
+              };
+          };
         };
 
       flake.nixosModules.default = import ./module.nix self;

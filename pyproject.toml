@@ -1,22 +1,18 @@
 [project]
 name = "forgesync"
 version = "0.1.0"
-description = "Forge synchronization"
+description = "Automatically mirror all your Forgejo repositories to GitHub or any Forgejo instance"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
     "pyforgejo==2.0.*",
     "pygithub==2.8.*",
     "typed-argument-parser==1.11.*",
-    "xdg-base-dirs==6.0.*",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [project.scripts]
 forgesync = "forgesync.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/forgesync"]
+[build-system]
+requires = ["uv_build==0.9.*"]
+build-backend = "uv_build"

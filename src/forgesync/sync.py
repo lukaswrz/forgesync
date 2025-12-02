@@ -2,12 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
-from pyforgejo import Repository as ForgejoRepository
 
-
-class Destination(StrEnum):
-    GITHUB = "github"
-    FORGEJO = "forgejo"
+from .source import SourceRepository
+from .platform import Platform
 
 
 class RepositoryFeature(StrEnum):
@@ -27,7 +24,7 @@ class SyncedRepository:
     orig_owner: str
     name: str
     clone_url: str
-    destination: Destination
+    platform: Platform
     mirrored: bool
 
 
@@ -35,7 +32,7 @@ class Syncer(ABC):
     @abstractmethod
     def sync(
         self: Self,
-        from_repo: ForgejoRepository,
+        source_repo: SourceRepository,
         description: str,
         topics: list[str],
     ) -> SyncedRepository:

@@ -2,6 +2,8 @@ from logging import Logger
 from typing import Self, override
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
 
+from .source import SourceRepository
+from .platform import Platform
 from .sync import (
     RepositoryError,
     RepositoryFeature,
@@ -9,7 +11,6 @@ from .sync import (
     SyncError,
     SyncedRepository,
     Syncer,
-    Destination,
 )
 
 
@@ -47,20 +48,19 @@ class ForgejoSyncer(Syncer):
     @override
     def sync(
         self: Self,
-        from_repo: ForgejoRepository,
+        source_repo: SourceRepository,
         description: str,
         topics: list[str],
     ) -> SyncedRepository:
         if self.user.login is None:
             raise SyncError("Cannot get username from Forgejo")
 
-        if from_repo.name is None:
-            raise RepositoryError("Cannot get Forgejo repository name")
+        self.logger.info("Synchronizing to %s/%s", self.user.login, source_repo.name)
 
-        self.logger.info("Synchronizing %s/%s", self.user.login, from_repo.name)
+        real = source_repo.real
 
-        if from_repo.name in self.repos:
-            existing_repo = self.repos[from_repo.name]
+        if source_repo.name in self.repos:
+            existing_repo = self.repos[source_repo.name]
 
             if existing_repo.archived:
                 raise RepositorySkippedError("Destination repository is archived")
@@ -69,20 +69,20 @@ class ForgejoSyncer(Syncer):
                 raise RepositorySkippedError("Destination repository is a fork")
         else:
             new_repo = self.client.repository.create_current_user_repo(
-                name=from_repo.name,
+                name=source_repo.name,
                 auto_init=False,
-                default_branch=from_repo.default_branch,
+                default_branch=real.default_branch,
                 description=description,
-                private=from_repo.private,
+                private=real.private,
             )
 
             self.logger.info("Created new Forgejo repository %s", new_repo.full_name)
 
         edited_repo = self.client.repository.repo_edit(
             owner=self.user.login,
-            repo=from_repo.name,
-            archived=from_repo.archived,
-            default_branch=from_repo.default_branch,
+            repo=source_repo.name,
+            archived=real.archived,
+            default_branch=real.default_branch,
             description=description,
             external_tracker=None,
             external_wiki=None,
@@ -95,22 +95,20 @@ class ForgejoSyncer(Syncer):
             has_releases=RepositoryFeature.RELEASES in self.features,
             has_wiki=RepositoryFeature.WIKI in self.features,
             internal_tracker=None,
-            name=from_repo.name,
-            private=from_repo.private,
-            template=from_repo.template,
-            website=from_repo.website,
-            wiki_branch=from_repo.wiki_branch,
+            name=real.name,
+            private=real.private,
+            template=real.template,
+            website=real.website,
+            wiki_branch=real.wiki_branch,
         )
 
         if (
             edited_repo.owner is None
             or edited_repo.owner.login is None
-            or from_repo.owner is None
-            or from_repo.owner.login is None
             or edited_repo.name is None
             or edited_repo.clone_url is None
         ):
-            raise RepositoryError("Received malformed Forgejo repository")
+            raise RepositoryError("Received malformed target repository from Forgejo")
 
         self.client.repository.repo_update_topics(
             owner=edited_repo.owner.login,
@@ -122,9 +120,9 @@ class ForgejoSyncer(Syncer):
 
         return SyncedRepository(
             new_owner=edited_repo.owner.login,
-            orig_owner=from_repo.owner.login,
+            orig_owner=source_repo.owner,
             name=edited_repo.name,
             clone_url=edited_repo.clone_url,
-            destination=Destination.FORGEJO,
+            platform=Platform.FORGEJO,
             mirrored=False,
         )

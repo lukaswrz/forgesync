@@ -14,7 +14,7 @@ class PushMirrorConfig:
     interval: str
     remirror: bool
     immediate: bool
-    sync_on_commit: bool
+    sync_on_push: bool
 
 
 class PushMirrorer:
@@ -108,7 +108,7 @@ class PushMirrorer:
             remote_address=synced_repo.clone_url,
             remote_username=synced_repo.new_owner,
             remote_password=self.mirror_token,
-            sync_on_commit=config.sync_on_commit,
+            sync_on_commit=config.sync_on_push,
             use_ssh=False,
         )
 

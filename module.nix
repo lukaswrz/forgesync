@@ -25,13 +25,26 @@ in
       type = types.attrsOf (
         types.submodule {
           options = {
+            source = lib.mkOption {
+              example = "https://codeberg.org/api/v1";
+              description = ''
+                The base URL of the source instance.
+              '';
+              type = types.str;
+            };
+
+            target = lib.mkOption {
+              example = "github";
+              description = ''
+                The destination, e.g. github, codeberg or forgejo=https://forgejo.example.com/api/v1.
+              '';
+              type = types.str;
+            };
+
             settings = lib.mkOption {
               default = { };
               example = {
-                from-instance = "https://codeberg.org/api/v1";
-                to = "github";
-                to-instance = "https://api.github.com";
-                remirror = "always";
+                remirror = true;
                 description-template = "{description} (Mirror of {url})";
                 mirror-interval = "8h0m0s";
                 immediate = true;
@@ -57,13 +70,12 @@ in
                     ]
                   )
                 );
-
             };
 
             secretFile = lib.mkOption {
               type = types.path;
               description = ''
-                The EnvironmentFile for secrets required for Forgesync: `FROM_TOKEN`, `TO_TOKEN` and `MIRROR_TOKEN`.
+                The EnvironmentFile for the required tokens: `SOURCE_TOKEN`, `TARGET_TOKEN` and `MIRROR_TOKEN`.
               '';
             };
 
@@ -75,18 +87,6 @@ in
               };
               description = ''
                 When to run the job.
-              '';
-            };
-
-            inhibit = lib.mkOption {
-              default = [ ];
-              type = types.listOf (types.strMatching "^[^:]+$");
-              example = [
-                "sleep"
-              ];
-              description = ''
-                Run the Forgesync process with an inhibition lock taken;
-                see {manpage}`systemd-inhibit(1)` for a list of possible operations.
               '';
             };
           };
@@ -121,23 +121,15 @@ in
 
               ExecStart =
                 let
-                  inhibitArgs = [
-                    (lib.getExe' config.systemd.package "systemd-inhibit")
-                    "--mode"
-                    "block"
-                    "--who"
-                    description
-                    "--what"
-                    (lib.concatStringsSep ":" job.inhibit)
-                    "--why"
-                    "Scheduled Forgesync job ${jobName}"
+                  args = [
+                    (lib.getExe cfg.package)
+                  ]
+                  ++ (lib.cli.toCommandLineGNU { isLong = _: true; } job.settings)
+                  ++ [
                     "--"
+                    job.source
+                    job.target
                   ];
-
-                  args =
-                    (lib.optionals (job.inhibit != [ ]) inhibitArgs)
-                    ++ [ (lib.getExe cfg.package) ]
-                    ++ (lib.cli.toCommandLineGNU { isLong = _: true; } job.settings);
                 in
                 utils.escapeSystemdExecArgs args;
 
