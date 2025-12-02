@@ -121,11 +121,6 @@ Forgejo stores a few bits of information as part of a push mirror, including:
 
 There is currently no way to diff these fields via the Forgejo API, so if you want to change any of them, you need to use re-mirroring to recreate the push mirror with the desired configuration.
 
-The `--remirror-rule` option supports a simple syntax to control when existing mirrors should be replaced. For example, if you want to recreate mirrors on the first day of every month, you can pass `--remirror-rule '*-*-01 *:*:*'` to Forgesync.
-
-Just make sure your systemd timer (or similar) is configured properly.
-If the rule does not match at the time the command runs, the existing mirror will be left untouched.
-
 ### Immediate
 
 Forgejo mirrors repositories on a schedule or on push by default, depending on your configuration.

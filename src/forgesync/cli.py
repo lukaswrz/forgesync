@@ -20,7 +20,6 @@ from .sync import (
     SyncError,
 )
 from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
-from .remirror import should_remirror
 
 
 class ArgumentParser(Tap):
@@ -32,8 +31,6 @@ class ArgumentParser(Tap):
     "the repository description template"
     remirror: bool = False
     "whether mirrors should be recreated"
-    remirror_rule: str | None = None
-    "when mirrors should be recreated"
     mirror_interval: str = "8h0m0s"
     "repository mirror interval"
     log: str = "INFO"
@@ -105,9 +102,7 @@ def main() -> None:
 
     push_mirror_config = PushMirrorConfig(
         interval=args.mirror_interval,
-        remirror=should_remirror(rule=args.remirror_rule)
-        if args.remirror_rule is not None
-        else args.remirror,
+        remirror=args.remirror,
         immediate=args.immediate,
         sync_on_push=args.sync_on_push,
     )
