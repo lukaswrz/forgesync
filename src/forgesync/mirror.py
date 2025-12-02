@@ -76,6 +76,7 @@ class PushMirrorer:
                     owner=synced_repo.orig_owner,
                     repo=synced_repo.name,
                 )
+                self.logger.info("Triggered push mirror")
 
         self.logger.info("Finished mirror setup for %s", synced_repo.name)
 
