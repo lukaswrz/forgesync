@@ -47,7 +47,6 @@ in
                 remirror = true;
                 description-template = "{description} (Mirror of {url})";
                 mirror-interval = "8h0m0s";
-                immediate = true;
                 log = "INFO";
               };
               description = ''
