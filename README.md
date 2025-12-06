@@ -37,7 +37,7 @@ forgesync https://codeberg.org/api/v1 github \
   --remirror \
   --feature issues \
   --feature pull-requests \
-  --sync-on-push \
+  --on-commit \
   --mirror-interval 8h0m0s \
   --exclude myrepo
 ```
@@ -73,7 +73,7 @@ podman run --rm -it \
     --remirror \
     --feature issues \
     --feature pull-requests \
-    --sync-on-push \
+    --on-commit \
     --mirror-interval 8h0m0s \
     --exclude myrepo
 ```
@@ -115,7 +115,7 @@ Forgejo stores a few bits of information as part of a push mirror, including:
 
 * The mirror token
 * The mirror interval
-* The "mirror on push" toggle
+* The "on commit" toggle
 
 There is currently no way to diff these fields via the Forgejo API, so if you want to change any of them, you need to use re-mirroring to recreate the push mirror with the desired configuration.
 

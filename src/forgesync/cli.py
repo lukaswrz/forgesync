@@ -41,7 +41,7 @@ class ArgumentParser(Tap):
     "exclude repositories by these regular expressions"
     skip_initial: bool = False
     "don't tell Forgejo to mirror Git repositories immediately after creating the push mirror"
-    sync_on_push: bool = False
+    on_commit: bool = False
     "tell Forgejo to sync as soon as commits are pushed"
     feature: list[RepositoryFeature] = []
     "allow a repository feature"
@@ -104,7 +104,7 @@ def main() -> None:
         interval=args.mirror_interval,
         remirror=args.remirror,
         immediate=not args.skip_initial,
-        sync_on_push=args.sync_on_push,
+        on_commit=args.on_commit,
     )
 
     push_mirrorer = PushMirrorer(
