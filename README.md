@@ -15,7 +15,7 @@ While Forgejo supports periodic Git mirroring out of the box, it doesn't support
 Forgesync is currently available as:
 
 * A Nix package provided as part of this Nix flake. To use it in an ephemeral shell, run `nix shell git+https://hack.helveticanonstandard.net/helvetica/forgesync.git`.
-* A NixOS module. Check the [module source](module.nix).
+* A NixOS module. See [NixOS module usage](#nixos-module-usage) or check the [module source](module.nix).
 * A container. See [container usage](#container-usage).
 
 ## 💻 CLI usage
@@ -76,6 +76,68 @@ podman run --rm -it \
     --on-commit \
     --mirror-interval 8h0m0s \
     --exclude myrepo
+```
+
+## ❄️ NixOS module usage
+
+First, add the flake input:
+
+```nix
+{
+  inputs = {
+    # ...
+
+    forgesync = {
+      url = "git+https://hack.helveticanonstandard.net/helvetica/forgesync.git";
+      # If you already use any of the inputs listed here, you might want to de-duplicate them.
+      # inputs = {
+      #   treefmt.follows = "treefmt";
+      #   hooks.follows = "hooks";
+      #   flake-parts.follows = "flake-parts";
+      # };
+    };
+  };
+
+  # ...
+}
+```
+
+Then, configure Forgesync via the module:
+
+```nix
+{ inputs, ... }:
+{
+  # Either pass inputs via specialArgs and import the module here, or import the module via lib.nixosSystem.
+  imports = [
+    inputs.forgesync.nixosModules.default
+  ];
+
+  services.forgesync = {
+    enable = true;
+    jobs.github = {
+      source = "https://codeberg.org/api/v1";
+      target = "github";
+
+      settings = {
+        remirror = true;
+        feature = [
+          "issues"
+          "pull-requests"
+        ];
+        sync-on-push = true;
+        mirror-interval = "0h0m0s";
+      };
+
+      # Use whichever secret management you prefer, e.g. agenix.
+      secretFile = "/path/to/secrets";
+
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
+    };
+  };
+}
 ```
 
 ## ⚠️ Back up your destination repositories!
