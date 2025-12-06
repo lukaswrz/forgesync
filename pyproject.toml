@@ -1,6 +1,6 @@
 [project]
 name = "forgesync"
-version = "0.1.0"
+version = "1.0.0"
 description = "Automatically mirror all your Forgejo repositories to GitHub or any Forgejo instance"
 readme = "README.md"
 requires-python = "==3.13.*"
