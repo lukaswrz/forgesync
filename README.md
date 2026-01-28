@@ -14,9 +14,8 @@ While Forgejo supports periodic Git mirroring out of the box, it doesn't support
 
 Forgesync is currently available as:
 
-* A Nix package provided as part of this Nix flake. To use it in an ephemeral shell, run `nix shell git+https://hack.helveticanonstandard.net/helvetica/forgesync.git`.
-* A NixOS module. See [NixOS module usage](#nixos-module-usage) or check the [module source](module.nix).
-* A container. See [container usage](#container-usage).
+* ❄️ A Nix package and NixOS module provided as part of this Nix flake. See [usage via Nix](#usage-via-nix).
+* 📦 A container. See [container usage](#container-usage).
 
 ## 💻 CLI usage
 
@@ -44,41 +43,22 @@ forgesync https://codeberg.org/api/v1 github \
 
 Run `forgesync --help` to see what the example options do, and which ones you can add on top.
 
-## 📦 Container usage
+Check [required token scopes](#required-token-scopes) to find out what you need to specify when creating tokens.
 
-Alternatively, Forgesync can also be run in a container with Podman, Docker, Kubernetes, etc.
+## ⚠️ Back up your destination repositories!
 
-### Building the container
+> [!WARNING]
+> Before running Forgesync, make sure you have backed up your repositories from the destination if you have any and plan to keep them. Forgesync will overwrite any repositories at the destination that share the same names as those on the source Forgejo instance. For more information, see [syncing by name](#syncing-by-name).
 
-You can build the container with your favorite image building tool (Podman, Buildah, Docker, etc.).
+## Usage via Nix
 
-Example with Podman:
-
-```bash
-podman build -t localhost/forgesync .
-```
-
-### Running the container
-
-The `SOURCE_TOKEN`, `TARGET_TOKEN`, and `MIRROR_TOKEN` tokens must be passed to the container at runtime (`-e` for Podman/Docker, or as a Kubernetes secret).
-
-Example with Podman:
+To use Forgesync in an ephemeral shell, run this:
 
 ```bash
-podman run --rm -it \
-  -e SOURCE_TOKEN=my_forgejo_token \
-  -e TARGET_TOKEN=my_github_token \
-  -e MIRROR_TOKEN=my_github_mirror_token \
-  localhost/forgesync https://codeberg.org/api/v1 github \
-    --remirror \
-    --feature issues \
-    --feature pull-requests \
-    --on-commit \
-    --mirror-interval 8h0m0s \
-    --exclude myrepo
+nix shell git+https://hack.helveticanonstandard.net/helvetica/forgesync.git
 ```
 
-## ❄️ NixOS module usage
+### NixOS module
 
 First, add the flake input:
 
@@ -140,12 +120,43 @@ Then, configure Forgesync via the module:
 }
 ```
 
-## ⚠️ Back up your destination repositories!
+Take a look at the [module source](module.nix) for more details.
 
-> [!WARNING]
-> Before running Forgesync, make sure you have backed up your repositories from the destination if you have any and plan to keep them. Forgesync will overwrite any repositories at the destination that share the same names as those on the source Forgejo instance, so be careful.
+## Container usage
 
-## 🔑 Required token scopes
+Alternatively, Forgesync can also be run in a container with Podman, Docker, Kubernetes, etc.
+
+### Building the container
+
+You can build the container with your favorite image building tool (Podman, Buildah, Docker, etc.).
+
+Example with Podman:
+
+```bash
+podman build -t localhost/forgesync .
+```
+
+### Running the container
+
+The `SOURCE_TOKEN`, `TARGET_TOKEN`, and `MIRROR_TOKEN` tokens must be passed to the container at runtime (`-e` for Podman/Docker, or as a Kubernetes secret).
+
+Example with Podman:
+
+```bash
+podman run --rm -it \
+  -e SOURCE_TOKEN=my_forgejo_token \
+  -e TARGET_TOKEN=my_github_token \
+  -e MIRROR_TOKEN=my_github_mirror_token \
+  localhost/forgesync https://codeberg.org/api/v1 github \
+    --remirror \
+    --feature issues \
+    --feature pull-requests \
+    --on-commit \
+    --mirror-interval 8h0m0s \
+    --exclude myrepo
+```
+
+## Required token scopes
 
 ### Source token (Forgejo)
 
