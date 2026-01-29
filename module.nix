@@ -15,7 +15,7 @@ in
   options.services.forgesync = {
     enable = lib.mkEnableOption "Forgesync";
 
-    package = lib.mkPackageOption self.packages.${pkgs.system} "default" { };
+    package = lib.mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "default" { };
 
     jobs = lib.mkOption {
       description = ''
