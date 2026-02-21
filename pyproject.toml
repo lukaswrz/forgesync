@@ -5,9 +5,9 @@ description = "Automatically mirror all your Forgejo repositories to GitHub or a
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
-    "pyforgejo==2.0.*",
-    "pygithub==2.8.*",
-    "typed-argument-parser==1.11.*",
+  "pyforgejo==2.0.*",
+  "pygithub==2.8.*",
+  "typed-argument-parser==1.11.*",
 ]
 
 [project.scripts]

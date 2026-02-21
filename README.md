@@ -4,18 +4,18 @@ Forgesync automatically synchronizes all your Forgejo repositories to GitHub or 
 
 While Forgejo supports periodic Git mirroring out of the box, it doesn't support syncing repository metadata, and setting these mirrors up manually can be a lot of work. Forgesync resolves this by:
 
-* Automatically creating target repositories  
-* Syncing repository metadata (descriptions, topics, etc.)  
-* Enabling or disabling features like issues or pull requests on the destination
-* Setting up mirrors directly within the source Forgejo instance  
-* Filtering out forks, mirrors, and private repositories
+- Automatically creating target repositories
+- Syncing repository metadata (descriptions, topics, etc.)
+- Enabling or disabling features like issues or pull requests on the destination
+- Setting up mirrors directly within the source Forgejo instance
+- Filtering out forks, mirrors, and private repositories
 
 ## ⬇️ Getting Forgesync
 
 Forgesync is currently available as:
 
-* ❄️ A Nix package and NixOS module provided as part of this Nix flake. See [usage via Nix](#usage-via-nix).
-* 📦 A container. See [container usage](#container-usage).
+- ❄️ A Nix package and NixOS module provided as part of this Nix flake. See [usage via Nix](#usage-via-nix).
+- 📦 A container. See [container usage](#container-usage).
 
 ## 💻 CLI usage
 
@@ -162,21 +162,21 @@ podman run --rm -it \
 
 Your `SOURCE_TOKEN` must support:
 
-* **Repository:** read + write
-* **User data:** read + write
+- **Repository:** read + write
+- **User data:** read + write
 
 ### Destination token (GitHub or Forgejo)
 
 Your `TARGET_TOKEN` must support:
 
-* **Repository:** read + write  
-* **User data:** read + write
+- **Repository:** read + write
+- **User data:** read + write
 
 ### Mirror token
 
 The `MIRROR_TOKEN` only needs to support:
 
-* **Repository:** read + write
+- **Repository:** read + write
 
 For GitHub fine-grained personal access tokens, this means that you will need to check "all repositories" under repository access and enable read and write permissions on repository contents.
 
@@ -186,9 +186,9 @@ For GitHub fine-grained personal access tokens, this means that you will need to
 
 Forgejo stores a few bits of information as part of a push mirror, including:
 
-* The mirror token
-* The mirror interval
-* The "on commit" toggle
+- The mirror token
+- The mirror interval
+- The "on commit" toggle
 
 There is currently no way to diff these fields via the Forgejo API, so if you want to change any of them, you need to use re-mirroring to recreate the push mirror with the desired configuration.
 
@@ -196,9 +196,9 @@ There is currently no way to diff these fields via the Forgejo API, so if you wa
 
 Forgesync synchronizes repositories by their names, so a typical setup would look like this:
 
-* forgejo-user/repo-a → github-user/repo-a
-* forgejo-user/repo-b → github-user/repo-b
-* forgejo-user/repo-c → github-user/repo-c
+- forgejo-user/repo-a → github-user/repo-a
+- forgejo-user/repo-b → github-user/repo-b
+- forgejo-user/repo-c → github-user/repo-c
 
 If you rename repo-a to repo-a-ng, the old push mirror will remain in Forgejo, and it will keep mirroring to github-user/repo-a as well as github-user/repo-a-ng.
 Forgesync does not track renames or maintain any state about repository history, so it won't detect that the destination no longer matches the source.
