@@ -3,15 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    hooks = {
-      url = "github:cachix/git-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    treefmt = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -33,71 +24,62 @@
     {
       self,
       nixpkgs,
-      flake-parts,
-      hooks,
-      treefmt,
       uv2nix,
       pyproject-nix,
       pyproject-build-systems,
       ...
-    }@inputs:
+    }:
     let
+      inherit (nixpkgs) lib;
+
+      systems = nixpkgs.lib.systems.flakeExposed;
+
+      forAllSystems =
+        f:
+        lib.genAttrs systems (
+          system:
+          f (
+            let
+              pkgs = nixpkgs.legacyPackages.${system};
+              python = pkgs.python313;
+            in
+            {
+              inherit system pkgs python;
+              pythonSet =
+                (pkgs.callPackage pyproject-nix.build.packages {
+                  inherit python;
+                }).overrideScope
+                  (
+                    lib.composeManyExtensions [
+                      pyproject-build-systems.overlays.wheel
+                      overlay
+                    ]
+                  );
+            }
+          )
+        );
+
       workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
       overlay = workspace.mkPyprojectOverlay {
         sourcePreference = "wheel";
       };
     in
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        hooks.flakeModule
-        treefmt.flakeModule
-      ];
-
-      systems = nixpkgs.lib.systems.flakeExposed;
-
-      perSystem =
+    {
+      devShells = forAllSystems (
+        { pkgs, python, ... }:
         {
-          config,
-          pkgs,
-          inputs',
-          lib,
-          ...
-        }:
-        let
-          python = pkgs.python313;
-          pythonSet =
-            (pkgs.callPackage pyproject-nix.build.packages {
-              inherit python;
-            }).overrideScope
-              (
-                lib.composeManyExtensions [
-                  pyproject-build-systems.overlays.wheel
-                  overlay
-                ]
-              );
-        in
-        {
-          treefmt = {
-            projectRootFile = "flake.nix";
-
-            programs.nixfmt = {
-              enable = true;
-              package = pkgs.nixfmt-rfc-style;
-            };
-
-            programs.ruff-check.enable = true;
-            programs.ruff-format.enable = true;
-          };
-
-          pre-commit.settings.hooks = {
-            treefmt.enable = true;
-          };
-
-          devShells.default = pkgs.mkShell {
+          default = pkgs.mkShell {
             packages = [
               python
               pkgs.libffi
               pkgs.uv
+
+              # Formatters
+              pkgs.treefmt
+              pkgs.nixfmt
+              pkgs.prettier
+              pkgs.taplo
+              pkgs.ruff
             ];
             env = {
               UV_NO_SYNC = "1";
@@ -108,24 +90,34 @@
               LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
             };
             shellHook = ''
-              ${config.pre-commit.installationScript}
               unset PYTHONPATH
             '';
           };
+        }
+      );
 
-          packages = {
-            venv = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
-            default =
-              let
-                inherit (pkgs.callPackages pyproject-nix.build.util { }) mkApplication;
-              in
-              mkApplication {
-                venv = config.packages.venv;
-                package = pythonSet.forgesync;
-              };
-          };
-        };
+      packages = forAllSystems (
+        {
+          system,
+          pkgs,
+          pythonSet,
+          ...
+        }:
+        {
+          venv = pythonSet.mkVirtualEnv "forgesync" workspace.deps.default;
+          default =
+            let
+              inherit (pkgs.callPackages pyproject-nix.build.util { }) mkApplication;
+            in
+            mkApplication {
+              venv = self.packages.${system}.venv;
+              package = pythonSet.forgesync;
+            };
+        }
+      );
 
-      flake.nixosModules.default = import ./module.nix self;
+      nixosModules.default = import ./module.nix self;
+
+      formatter = forAllSystems ({ pkgs, ... }: pkgs.treefmt);
     };
 }

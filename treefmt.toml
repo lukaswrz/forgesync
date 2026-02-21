@@ -1,0 +1,24 @@
+[formatter.nix]
+command = "nixfmt"
+options = ["--"]
+includes = ["*.nix"]
+
+[formatter.toml]
+command = "taplo"
+options = ["format", "--"]
+includes = ["*.toml"]
+
+[formatter.markdown]
+command = "prettier"
+options = ["--parser", "markdown", "--write", "--"]
+includes = ["*.md"]
+
+[formatter.ruff-format]
+command = "ruff"
+options = ["format", "--"]
+includes = ["*.py"]
+
+[formatter.ruff-check]
+command = "ruff"
+options = ["check", "--fix", "--"]
+includes = ["*.py"]
