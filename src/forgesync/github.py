@@ -9,7 +9,7 @@ from github import Github, Auth as GithubAuth
 
 from .source import SourceRepository
 from .platform import Platform
-from .mirror import PushMirrorConfig, PushMirrorer
+from .mirror import PushMirrorConfig, PushMirrorer, Remirror
 from .sync import (
     RepositoryError,
     RepositoryFeature,
@@ -114,7 +114,7 @@ class GithubSyncer(Syncer):
                 synced_repo=synced_repo,
                 config=replace(
                     self.push_mirror_config,
-                    remirror=True,
+                    remirror=Remirror.YES,
                     immediate=True,
                 ),
             )

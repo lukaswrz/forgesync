@@ -19,7 +19,7 @@ from .sync import (
     RepositorySkippedError,
     SyncError,
 )
-from .mirror import MirrorError, PushMirrorConfig, PushMirrorer
+from .mirror import MirrorError, PushMirrorConfig, PushMirrorer, Remirror
 
 
 class ArgumentParser(Tap):
@@ -31,6 +31,8 @@ class ArgumentParser(Tap):
     "the repository description template"
     remirror: bool = False
     "whether mirrors should be recreated"
+    purge: bool = False
+    "whether to purge all existing mirrors before creating new ones"
     mirror_interval: str = "8h0m0s"
     "repository mirror interval"
     log: str = "INFO"
@@ -102,7 +104,11 @@ def main() -> None:
 
     push_mirror_config = PushMirrorConfig(
         interval=args.mirror_interval,
-        remirror=args.remirror,
+        remirror=Remirror.PURGE
+        if args.purge
+        else Remirror.YES
+        if args.remirror
+        else Remirror.NO,
         immediate=not args.skip_initial,
         on_commit=args.on_commit,
     )

@@ -201,7 +201,5 @@ Forgesync synchronizes repositories by their names, so a typical setup would loo
 * forgejo-user/repo-c → github-user/repo-c
 
 If you rename repo-a to repo-a-ng, the old push mirror will remain in Forgejo, and it will keep mirroring to github-user/repo-a as well as github-user/repo-a-ng.
-You're free to manually delete the push mirror(s) in Forgejo in these cases.
-
 Forgesync does not track renames or maintain any state about repository history, so it won't detect that the destination no longer matches the source.
-I consider this an edge case and generally not worth introducing any state management for, but it's important to be aware of it if you tend to rename your repositories.
+As a workaround, you can pass `--purge` to wipe all existing push mirrors from the source repository before creating any new ones.
