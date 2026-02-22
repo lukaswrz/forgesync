@@ -55,7 +55,7 @@ Check [required token scopes](#required-token-scopes) to find out what you need 
 To use Forgesync in an ephemeral shell, run this:
 
 ```bash
-nix shell git+https://hack.helveticanonstandard.net/helvetica/forgesync.git
+nix shell git+https://hack.moontide.ink/m64/forgesync.git
 ```
 
 ### NixOS module
@@ -68,7 +68,7 @@ First, add the flake input:
     # ...
 
     forgesync = {
-      url = "git+https://hack.helveticanonstandard.net/helvetica/forgesync.git";
+      url = "git+https://hack.moontide.ink/m64/forgesync.git";
       # If you already use any of the inputs listed here, you might want to de-duplicate them.
       # inputs = {
       #   treefmt.follows = "treefmt";
