@@ -67,15 +67,7 @@ First, add the flake input:
   inputs = {
     # ...
 
-    forgesync = {
-      url = "git+https://hack.moontide.ink/m64/forgesync.git";
-      # If you already use any of the inputs listed here, you might want to de-duplicate them.
-      # inputs = {
-      #   treefmt.follows = "treefmt";
-      #   hooks.follows = "hooks";
-      #   flake-parts.follows = "flake-parts";
-      # };
-    };
+    forgesync.url = "git+https://hack.moontide.ink/m64/forgesync.git";
   };
 
   # ...
@@ -87,7 +79,8 @@ Then, configure Forgesync via the module:
 ```nix
 { inputs, ... }:
 {
-  # Either pass inputs via specialArgs and import the module here, or import the module via lib.nixosSystem.
+  # Either pass inputs via specialArgs and import the module here, or import it
+  # via lib.nixosSystem.
   imports = [
     inputs.forgesync.nixosModules.default
   ];
