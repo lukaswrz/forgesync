@@ -97,7 +97,7 @@ Then, configure Forgesync via the module:
           "issues"
           "pull-requests"
         ];
-        sync-on-push = true;
+        on-commit = true;
         mirror-interval = "0h0m0s";
       };
 
