@@ -24,13 +24,30 @@ class RepositoryFilter:
         self, source_repos: Iterable[SourceRepository]
     ) -> Generator[SourceRepository]:
         for source_repo in source_repos:
-            if (
-                source_repo.real.fork
-                or source_repo.real.mirror
-                or source_repo.real.private
-            ):
+            if source_repo.real.fork:
+                self.logger.info(
+                    "Repository %s is a fork, skipping", source_repo
+                )
                 continue
 
+            if source_repo.real.mirror:
+                self.logger.info(
+                    "Repository %s is a mirror, skipping", source_repo
+                )
+                continue
+
+            if source_repo.real.private:
+                self.logger.info(
+                    "Repository %s is private, skipping", source_repo
+                )
+                continue
+
+            if source_repo.real.archived:
+                self.logger.info(
+                    "Repository %s is archived, skipping", source_repo
+                )
+                continue
+            
             if self.includes != [] and not self.matches(
                 source_repo.name, self.includes
             ):
