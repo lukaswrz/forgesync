@@ -10,14 +10,14 @@ While Forgejo supports periodic Git mirroring out of the box, it doesn't support
 - Setting up mirrors directly within the source Forgejo instance
 - Filtering out forks, mirrors, and private repositories
 
-## ⬇️ Getting Forgesync
+## Getting Forgesync
 
 Forgesync is currently available as:
 
 - ❄️ A Nix package and NixOS module provided as part of this Nix flake. See [usage via Nix](#usage-via-nix).
 - 📦 A container. See [container usage](#container-usage).
 
-## 💻 CLI usage
+## CLI usage
 
 Here's how you would synchronize your Codeberg repositories to GitHub:
 
@@ -45,68 +45,66 @@ Run `forgesync --help` to see what the example options do, and which ones you ca
 
 Check [required token scopes](#required-token-scopes) to find out what you need to specify when creating tokens.
 
-## ⚠️ Back up your destination repositories!
-
 > [!WARNING]
 > Before running Forgesync, make sure you have backed up your repositories from the destination if you have any and plan to keep them. Forgesync will overwrite any repositories at the destination that share the same names as those on the source Forgejo instance. For more information, see [syncing by name](#syncing-by-name).
 
 ## Usage via Nix
 
-To use Forgesync in an ephemeral shell, run this:
+This flake outputs a package via `packages.<system>.default` and a NixOS module via `nixosModules.default`. See [flake.nix](flake.nix) for more details.
 
-```bash
-nix shell git+https://hack.moontide.ink/m64/forgesync.git
-```
+### NixOS module usage
 
-### NixOS module
-
-First, add the flake input:
+Here's an example Forgesync configuration for NixOS:
 
 ```nix
 {
-  inputs = {
-    # ...
-
-    forgesync.url = "git+https://hack.moontide.ink/m64/forgesync.git";
-  };
-
-  # ...
-}
-```
-
-Then, configure Forgesync via the module:
-
-```nix
-{ inputs, ... }:
-{
-  # Either pass inputs via specialArgs and import the module here, or import it
-  # via lib.nixosSystem.
-  imports = [
-    inputs.forgesync.nixosModules.default
-  ];
-
   services.forgesync = {
     enable = true;
-    jobs.github = {
-      source = "https://codeberg.org/api/v1";
-      target = "github";
+    jobs = {
+      github = {
+        source = "https://codeberg.org/api/v1";
+        target = "github";
 
-      settings = {
-        remirror = true;
-        feature = [
-          "issues"
-          "pull-requests"
-        ];
-        on-commit = true;
-        mirror-interval = "0h0m0s";
+        settings = {
+          remirror = true;
+          feature = [
+            "issues"
+            "pull-requests"
+          ];
+          on-commit = true;
+          mirror-interval = "0h0m0s";
+        };
+
+        # Use whichever secret management you prefer, e.g. agenix.
+        secretFile = "/path/to/secrets";
+
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+        };
       };
 
-      # Use whichever secret management you prefer, e.g. agenix.
-      secretFile = "/path/to/secrets";
+      codeberg = {
+        source = "https://forgejo.example.com/api/v1";
+        target = "codeberg";
 
-      timerConfig = {
-        OnCalendar = "daily";
-        Persistent = true;
+        settings = {
+          remirror = true;
+          feature = [
+            "issues"
+            "pull-requests"
+          ];
+          on-commit = true;
+          mirror-interval = "0h0m0s";
+        };
+
+        # Ditto.
+        secretFile = "/path/to/secrets";
+
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+        };
       };
     };
   };
@@ -173,7 +171,7 @@ The `MIRROR_TOKEN` only needs to support:
 
 For GitHub fine-grained personal access tokens, this means that you will need to check "all repositories" under repository access and enable read and write permissions on repository contents.
 
-## 🪞 Mirror management
+## Mirror management
 
 ### Re-mirroring
 
