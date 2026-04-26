@@ -1,3 +1,5 @@
+from collections.abc import Generator
+import itertools
 from logging import Logger
 from typing import Self, override
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
@@ -12,6 +14,16 @@ from .sync import (
     SyncedRepository,
     Syncer,
 )
+
+
+def fetch_all_forgejo_repos(
+    client: PyforgejoApi, login: str
+) -> Generator[ForgejoRepository, None, None]:
+    for page in itertools.count(1):
+        repos = client.user.list_repos(login, page=page)
+        if not repos:
+            break
+        yield from repos
 
 
 class ForgejoSyncer(Syncer):
@@ -38,7 +50,7 @@ class ForgejoSyncer(Syncer):
             raise SyncError("Could not get username from Forgejo")
 
         self.repos = {}
-        for repo in self.client.user.list_repos(self.user.login):
+        for repo in fetch_all_forgejo_repos(self.client, self.user.login):
             if repo.name is None:
                 continue
             self.repos[repo.name] = repo
