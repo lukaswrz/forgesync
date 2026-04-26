@@ -42,6 +42,10 @@ class ArgumentParser(Tap):
     "include repositories by these regular expressions"
     exclude: list[str] = []
     "exclude repositories by these regular expressions"
+    include_forks: bool = False
+    "include forks"
+    include_private: bool = False
+    "include private repositories"
     skip_initial: bool = False
     "don't tell Forgejo to mirror Git repositories immediately after creating the push mirror"
     on_commit: bool = False
@@ -141,6 +145,8 @@ def main() -> None:
     filter = RepositoryFilter(
         includes=args.include,
         excludes=args.exclude,
+        include_forks=args.include_forks,
+        include_private=args.include_private,
         logger=logger,
     )
 

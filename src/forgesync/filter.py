@@ -11,6 +11,8 @@ class RepositoryFilter:
     includes: list[str]
     excludes: list[str]
     logger: Logger
+    include_forks: bool = False
+    include_private: bool = False
 
     @staticmethod
     def matches(name: str, patterns: list[str]) -> bool:
@@ -24,7 +26,7 @@ class RepositoryFilter:
         self, source_repos: Iterable[SourceRepository]
     ) -> Iterator[SourceRepository]:
         for source_repo in source_repos:
-            if source_repo.real.fork:
+            if source_repo.real.fork and not self.include_forks:
                 self.logger.info("Repository %s is a fork, skipping", source_repo)
                 continue
 
@@ -32,7 +34,7 @@ class RepositoryFilter:
                 self.logger.info("Repository %s is a mirror, skipping", source_repo)
                 continue
 
-            if source_repo.real.private:
+            if source_repo.real.private and not self.include_private:
                 self.logger.info("Repository %s is private, skipping", source_repo)
                 continue
 
