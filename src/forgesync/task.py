@@ -5,6 +5,7 @@ from .dest import Destination
 from .mirror import PushMirrorConfig, PushMirrorer
 from .source import SourceRepository
 from .sync import Syncer
+from .forgejo import paginate
 
 
 class Task:
@@ -34,12 +35,14 @@ class Task:
         self.push_mirrorer = push_mirrorer
         self.push_mirror_config = push_mirror_config
         self.destination = destination
-
-        topics_list = source_client.repository.repo_list_topics(
-            owner=source_repo.owner,
-            repo=source_repo.name,
+        self.topics = list(
+            paginate(
+                source_client.repository.repo_list_topics,
+                owner=source_repo.owner,
+                repo=source_repo.name,
+                convert=lambda t: t.topics,
+            )
         )
-        self.topics = topics_list.topics if topics_list.topics is not None else []
 
     def run(self) -> None:
         description = self.description_template.format(
