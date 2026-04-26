@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1769461804,
-        "narHash": "sha256-msG8SU5WsBUfVVa/9RPLaymvi5bI8edTavbIq3vRlhI=",
+        "lastModified": 1776877367,
+        "narHash": "sha256-EHq1/OX139R1RvBzOJ0aMRT3xnWyqtHBRUBuO1gFzjI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "bfc1b8a4574108ceef22f02bafcf6611380c100d",
+        "rev": "0726a0ecb6d4e08f6adced58726b95db924cef57",
         "type": "github"
       },
       "original": {
@@ -29,11 +29,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763662255,
-        "narHash": "sha256-4bocaOyLa3AfiS8KrWjZQYu+IAta05u3gYZzZ6zXbT0=",
+        "lastModified": 1776659114,
+        "narHash": "sha256-qapCOQmR++yZSY43dzrp3wCrkOTLpod+ONtJWBk6iKU=",
         "owner": "pyproject-nix",
         "repo": "build-system-pkgs",
-        "rev": "042904167604c681a090c07eb6967b4dd4dae88c",
+        "rev": "ffaa2161dd5d63e0e94591f86b54fc239660fb2e",
         "type": "github"
       },
       "original": {
@@ -49,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769116518,
-        "narHash": "sha256-M+etHAj3oI9zr+Cpj5u2kMAddvxcJCmnWRtH/SklYlY=",
+        "lastModified": 1776715674,
+        "narHash": "sha256-Gs1VnEkCkkRZxJQAC/Dhz0Jbfi22mFXChbtNg9w/Ybg=",
         "owner": "pyproject-nix",
         "repo": "pyproject.nix",
-        "rev": "ab521eddafb936498f18c86d83e1774a53b1cb8a",
+        "rev": "69f57f27e52a87c54e28138a75ec741cd46663c9",
         "type": "github"
       },
       "original": {
@@ -80,11 +80,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769103499,
-        "narHash": "sha256-6U2AQNC1Sa+d7gUDQ58sqF39YVi5AKT9uHZSr+WVWGo=",
+        "lastModified": 1776718528,
+        "narHash": "sha256-XeGmo/BhkFXd8vVyendr3X4mQmw7CEkeQcpy7AHbVcg=",
         "owner": "pyproject-nix",
         "repo": "uv2nix",
-        "rev": "9eeb39b8fdd8352bfc6f1af7eab79f88bd0a6eb3",
+        "rev": "60982c30e16db3e0cba6c0ed13f0894b06ab2bf1",
         "type": "github"
       },
       "original": {
