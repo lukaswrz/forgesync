@@ -1,6 +1,7 @@
 from logging import Logger
-from typing import Self, override
+from typing import Self, override, Callable, Iterator, TypeVar, Any, Sequence
 from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
+from itertools import count
 
 from .source import SourceRepository
 from .platform import Platform
@@ -12,6 +13,30 @@ from .sync import (
     SyncedRepository,
     Syncer,
 )
+
+T = TypeVar("T")
+R = TypeVar("R")
+
+
+def paginate(
+    func: Callable[..., R],
+    *args: Any,
+    convert: Callable[[R], Sequence[T] | None] = lambda item: item,
+    limit: int = 50,
+    **kwargs: Any,
+) -> Iterator[T]:
+    for page in count(1):
+        result = func(*args, page=page, limit=limit, **kwargs)
+
+        items = convert(result) or []
+
+        if not items:
+            break
+
+        yield from items
+
+        if len(items) < limit:
+            break
 
 
 class ForgejoSyncer(Syncer):
@@ -38,7 +63,7 @@ class ForgejoSyncer(Syncer):
             raise SyncError("Could not get username from Forgejo")
 
         self.repos = {}
-        for repo in self.client.user.list_repos(self.user.login):
+        for repo in paginate(self.client.user.list_repos, self.user.login):
             if repo.name is None:
                 continue
             self.repos[repo.name] = repo

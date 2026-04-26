@@ -3,7 +3,9 @@ from logging import Logger
 from typing import Self
 from enum import StrEnum
 from pyforgejo import PushMirror, PyforgejoApi
+
 from .sync import SyncedRepository
+from .forgejo import paginate
 
 
 class MirrorError(RuntimeError):
@@ -59,9 +61,12 @@ class PushMirrorer:
 
         match config.remirror:
             case Remirror.PURGE:
-                push_mirrors_to_delete = self.client.repository.repo_list_push_mirrors(
-                    owner=synced_repo.orig_owner,
-                    repo=synced_repo.name,
+                push_mirrors_to_delete = list(
+                    paginate(
+                        self.client.repository.repo_list_push_mirrors,
+                        owner=synced_repo.orig_owner,
+                        repo=synced_repo.name,
+                    )
                 )
                 make_mirror = True
             case Remirror.YES:
@@ -112,7 +117,8 @@ class PushMirrorer:
     ) -> list[PushMirror]:
         repo_mirrors: list[PushMirror] = []
 
-        push_mirrors = self.client.repository.repo_list_push_mirrors(
+        push_mirrors = paginate(
+            self.client.repository.repo_list_push_mirrors,
             owner=synced_repo.orig_owner,
             repo=synced_repo.name,
         )
