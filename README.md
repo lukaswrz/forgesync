@@ -147,29 +147,36 @@ podman run --rm -it \
     --exclude myrepo
 ```
 
-## Required token scopes
+## Required token permissions
 
-### Source token (Forgejo)
+### `SOURCE_TOKEN`
 
-Your `SOURCE_TOKEN` must support:
+* `write:repository`
+* `read:user`
 
-- **Repository:** read + write
-- **User data:** read + write
+### Forgejo
 
-### Destination token (GitHub or Forgejo)
+#### `TARGET_TOKEN`
 
-Your `TARGET_TOKEN` must support:
+* `write:repository`
+* `write:user`
 
-- **Repository:** read + write
-- **User data:** read + write
+#### `MIRROR_TOKEN`
 
-### Mirror token
+* `write:repository`
 
-The `MIRROR_TOKEN` only needs to support:
+### GitHub
 
-- **Repository:** read + write
+#### `TARGET_TOKEN`
 
-For GitHub fine-grained personal access tokens, this means that you will need to check "all repositories" under repository access and enable read and write permissions on repository contents.
+* Administration: Read and write
+* Contents: Read-only
+* Metadata: Read-only
+
+#### `MIRROR_TOKEN`
+
+* Contents: Read and write
+* Metadata: Read-only
 
 ## Mirror management
 
