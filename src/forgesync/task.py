@@ -11,7 +11,7 @@ from .forgejo import paginate
 class Task:
     syncer: Syncer
     source_client: PyforgejoApi
-    description_template: str
+    description: str
     source_repo: SourceRepository
     topics: list[str]
     push_mirrorer: PushMirrorer
@@ -22,7 +22,7 @@ class Task:
         self,
         syncer: Syncer,
         source_client: PyforgejoApi,
-        description_template: str,
+        description: str,
         source_repo: SourceRepository,
         push_mirrorer: PushMirrorer,
         push_mirror_config: PushMirrorConfig,
@@ -30,7 +30,7 @@ class Task:
     ) -> None:
         self.syncer = syncer
         self.source_client = source_client
-        self.description_template = description_template
+        self.description = description
         self.source_repo = source_repo
         self.push_mirrorer = push_mirrorer
         self.push_mirror_config = push_mirror_config
@@ -45,17 +45,9 @@ class Task:
         )
 
     def run(self) -> None:
-        description = self.description_template.format(
-            description=self.source_repo.real.description,
-            url=self.source_repo.real.html_url,
-            website=self.source_repo.real.website,
-            full_name=self.source_repo.real.full_name,
-            clone_url=self.source_repo.real.clone_url,
-        )
-
         synced_repo = self.syncer.sync(
             source_repo=self.source_repo,
-            description=description,
+            description=self.description,
             topics=self.topics,
         )
 

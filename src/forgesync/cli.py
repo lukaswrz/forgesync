@@ -6,21 +6,23 @@ from logging import Formatter, Logger, StreamHandler
 from os import environ
 from sys import stderr
 from typing import Self, override
-from tap import Tap
-from pyforgejo import PyforgejoApi
 
-from .source import SourceRepository
-from .task import Task
+from pyforgejo import PyforgejoApi
+from tap import Tap
+
+from .description import make_placeholders
 from .dest import Destination
 from .filter import RepositoryFilter
+from .forgejo import paginate
+from .mirror import MirrorError, PushMirrorConfig, PushMirrorer, Remirror
+from .source import SourceRepository
 from .sync import (
     RepositoryError,
     RepositoryFeature,
     RepositorySkippedError,
     SyncError,
 )
-from .mirror import MirrorError, PushMirrorConfig, PushMirrorer, Remirror
-from .forgejo import paginate
+from .task import Task
 
 
 class ArgumentParser(Tap):
@@ -151,10 +153,22 @@ def main() -> None:
     )
 
     for source_repo in filter.filter(source_repos=source_repos):
+        placeholders = make_placeholders(source_repo.real)
+
+        try:
+            description = args.description_template.format_map(placeholders)
+        except KeyError as e:
+            logger.critical(
+                "Unknown repository description placeholder %s, expected one of the following: %s",
+                str(e),
+                ", ".join(placeholders.keys()),
+            )
+            exit(1)
+
         task = Task(
             syncer=syncer,
             source_client=source_client,
-            description_template=args.description_template,
+            description=description,
             source_repo=source_repo,
             push_mirrorer=push_mirrorer,
             push_mirror_config=push_mirror_config,

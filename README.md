@@ -151,32 +151,32 @@ podman run --rm -it \
 
 ### `SOURCE_TOKEN`
 
-* `write:repository`
-* `read:user`
+- `write:repository`
+- `read:user`
 
 ### Forgejo
 
 #### `TARGET_TOKEN`
 
-* `write:repository`
-* `write:user`
+- `write:repository`
+- `write:user`
 
 #### `MIRROR_TOKEN`
 
-* `write:repository`
+- `write:repository`
 
 ### GitHub
 
 #### `TARGET_TOKEN`
 
-* Administration: Read and write
-* Contents: Read-only
-* Metadata: Read-only
+- Administration: Read and write
+- Contents: Read-only
+- Metadata: Read-only
 
 #### `MIRROR_TOKEN`
 
-* Contents: Read and write
-* Metadata: Read-only
+- Contents: Read and write
+- Metadata: Read-only
 
 ## Mirror management
 
@@ -201,3 +201,14 @@ Forgesync synchronizes repositories by their names, so a typical setup would loo
 If you rename repo-a to repo-a-ng, the old push mirror will remain in Forgejo, and it will keep mirroring to github-user/repo-a as well as github-user/repo-a-ng.
 Forgesync does not track renames or maintain any state about repository history, so it won't detect that the destination no longer matches the source.
 As a workaround, you can pass `--purge` to wipe all existing push mirrors from the source repository before creating any new ones.
+
+## Repository description
+
+The `--description-template` option expects a string with placeholders.
+The default is `{description} (Mirror of {url})`, but you can use any of these placeholders in your own description:
+
+- `description` (the original description in the Forgejo repository)
+- `url` (the URL to the Forgejo repository)
+- `website` (the website entered in the Forgejo repository metadata)
+- `full_name` (e.g. user/repo)
+- `clone_url` (the Git clone URL)
