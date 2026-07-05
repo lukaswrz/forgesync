@@ -5,7 +5,7 @@ from .dest import Destination
 from .mirror import PushMirrorConfig, PushMirrorer
 from .source import SourceRepository
 from .sync import Syncer
-from .forgejo import paginate
+from .forgejo import depaginate
 
 
 class Task:
@@ -36,7 +36,7 @@ class Task:
         self.push_mirror_config = push_mirror_config
         self.destination = destination
         self.topics = list(
-            paginate(
+            depaginate(
                 source_client.repository.repo_list_topics,
                 owner=source_repo.owner,
                 repo=source_repo.name,

@@ -13,7 +13,7 @@ from tap import Tap
 from .description import make_placeholders
 from .dest import Destination
 from .filter import RepositoryFilter
-from .forgejo import paginate
+from .forgejo import depaginate
 from .mirror import MirrorError, PushMirrorConfig, PushMirrorer, Remirror
 from .source import SourceRepository
 from .sync import (
@@ -139,7 +139,7 @@ def main() -> None:
         logger.fatal("Could not get username from Forgejo")
         exit(1)
 
-    real_repos = paginate(source_client.user.list_repos, source_user.login)
+    real_repos = depaginate(source_client.user.list_repos, source_user.login)
     source_repos: list[SourceRepository] = []
     for real in real_repos:
         source_repos.append(SourceRepository(real=real))

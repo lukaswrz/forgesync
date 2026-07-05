@@ -18,7 +18,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 
-def paginate(
+def depaginate(
     func: Callable[..., R],
     *args: Any,
     convert: Callable[[R], Sequence[T] | None] = lambda item: item,
@@ -63,7 +63,7 @@ class ForgejoSyncer(Syncer):
             raise SyncError("Could not get username from Forgejo")
 
         self.repos = {}
-        for repo in paginate(self.client.user.list_repos, self.user.login):
+        for repo in depaginate(self.client.user.list_repos, self.user.login):
             if repo.name is None:
                 continue
             self.repos[repo.name] = repo
