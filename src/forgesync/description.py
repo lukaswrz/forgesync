@@ -2,7 +2,7 @@ from pyforgejo import Repository
 
 
 def make_placeholders(repo: Repository) -> dict[str, str]:
-    fallback = "<unknown>"
+    fallback = ""
 
     return {
         "description": repo.description or fallback,
