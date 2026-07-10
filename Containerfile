@@ -1,7 +1,7 @@
 FROM docker.io/alpine:latest
 
-ENV FROM_TOKEN=
-ENV TO_TOKEN=
+ENV SOURCE_TOKEN=
+ENV TARGET_TOKEN=
 ENV MIRROR_TOKEN=
 
 RUN apk add uv
