@@ -52,23 +52,34 @@ class ForgejoSyncer(Syncer):
         token: str,
         features: list[RepositoryFeature],
         logger: Logger,
+        org: str | None = None
     ) -> None:
-        self.client = PyforgejoApi(base_url=instance, api_key=token)
 
-        self.user = self.client.user.get_current()
+        self.client = PyforgejoApi(base_url=instance, api_key=token)
 
         self.features = features
 
-        if self.user.login is None:
-            raise SyncError("Could not get username from Forgejo")
+        self.logger = logger
+
+        self.is_org = bool(org)
 
         self.repos = {}
-        for repo in depaginate(self.client.user.list_repos, self.user.login):
-            if repo.name is None:
-                continue
-            self.repos[repo.name] = repo
-
-        self.logger = logger
+        if self.is_org:
+            self.target_owner = org
+            self.user = None
+            for repo in depaginate(self.client.organization.org_list_repos, self.target_owner):
+                if repo.name is None:
+                    continue
+                self.repos[repo.name] = repo
+        else:
+            self.user = self.client.user.get_current()
+            if self.user.login is None:
+                raise SyncError("Could not get username from Forgejo")
+            self.target_owner = self.user.login
+            for repo in depaginate(self.client.user.list_repos, self.target_owner):
+                if repo.name is None:
+                    continue
+                self.repos[repo.name] = repo
 
     @override
     def sync(
@@ -77,10 +88,7 @@ class ForgejoSyncer(Syncer):
         description: str,
         topics: list[str],
     ) -> SyncedRepository:
-        if self.user.login is None:
-            raise SyncError("Cannot get username from Forgejo")
-
-        self.logger.info("Synchronizing to %s/%s", self.user.login, source_repo.name)
+        self.logger.info("Synchronizing to %s/%s", self.target_owner, source_repo.name)
 
         real = source_repo.real
 
@@ -93,18 +101,28 @@ class ForgejoSyncer(Syncer):
             if existing_repo.fork:
                 raise RepositorySkippedError("Destination repository is a fork")
         else:
-            new_repo = self.client.repository.create_current_user_repo(
-                name=source_repo.name,
-                auto_init=False,
-                default_branch=real.default_branch,
-                description=description,
-                private=real.private,
-            )
+            if self.is_org:
+                new_repo = self.client.organization.create_org_repo(
+                    org=self.target_owner,
+                    name=source_repo.name,
+                    auto_init=False,
+                    default_branch=real.default_branch,
+                    description=description,
+                    private=real.private,
+                )
+            else:
+                new_repo = self.client.repository.create_current_user_repo(
+                    name=source_repo.name,
+                    auto_init=False,
+                    default_branch=real.default_branch,
+                    description=description,
+                    private=real.private,
+                )
 
             self.logger.info("Created new Forgejo repository %s", new_repo.full_name)
 
         edited_repo = self.client.repository.repo_edit(
-            owner=self.user.login,
+            owner=self.target_owner,
             repo=source_repo.name,
             archived=real.archived,
             default_branch=real.default_branch,

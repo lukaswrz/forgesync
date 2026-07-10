@@ -30,6 +30,8 @@ class ArgumentParser(Tap):
     "base URL of the source instance"
     target: Destination
     "the destination, e.g. github, codeberg or forgejo=https://forgejo.example.com/api/v1"
+    org: str | None = None
+    "the organizaion namespace to sync instead of the user account"
     description_template: str = "{description} (Mirror of {url})"
     "the repository description template"
     remirror: bool = False
@@ -132,14 +134,19 @@ def main() -> None:
         logger=logger,
         push_mirrorer=push_mirrorer,
         push_mirror_config=push_mirror_config,
+        org=args.org,
     )
 
-    source_user = source_client.user.get_current()
-    if source_user.login is None:
-        logger.fatal("Could not get username from Forgejo")
-        exit(1)
+    if args.org:
+        logger.info("Fetching source repositories from organization: %s", args.org)
+        real_repos = depaginate(source_client.organization.org_list_repos, args.org)
+    else:
+        source_user = source_client.user.get_current()
+        if source_user.login is None:
+            logger.fatal("Could not get username from Forgejo")
+            exit(1)
+        real_repos = depaginate(source_client.user.list_repos, source_user.login)
 
-    real_repos = depaginate(source_client.user.list_repos, source_user.login)
     source_repos: list[SourceRepository] = []
     for real in real_repos:
         source_repos.append(SourceRepository(real=real))
