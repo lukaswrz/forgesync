@@ -101,7 +101,7 @@ def get_tokens() -> tuple[str, str, str]:
     except KeyError as e:
         raise RuntimeError(f"Missing token: {e}")
     except OSError as e:
-       raise RuntimeError(f"Missing token file: {e}")
+       raise RuntimeError(f"Missing or inaccessible token file: {e}")
 
     return source_token, target_token, mirror_token
 
