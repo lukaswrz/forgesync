@@ -22,6 +22,7 @@ Forgesync is currently available as:
 Here's how you would synchronize your Codeberg repositories to GitHub:
 
 ```bash
+# If you add _FILE to the end of any of these environment variables, it will be treated as a path to a file containing that secret.
 # Token for gathering source repository metadata and setting up mirrors.
 export SOURCE_TOKEN=my_codeberg_token
 
@@ -130,6 +131,8 @@ podman build -t localhost/forgesync .
 ### Running the container
 
 The `SOURCE_TOKEN`, `TARGET_TOKEN`, and `MIRROR_TOKEN` tokens must be passed to the container at runtime (`-e` for Podman/Docker, or as a Kubernetes secret).
+
+A token file can also be used. To do so, pass the environment variables `SOURCE_TOKEN_FILE`, `TARGET_TOKEN_FILE`, and `MIRROR_TOKEN_FILE` to the container at runtime. (see above)
 
 Example with Podman:
 
