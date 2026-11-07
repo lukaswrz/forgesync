@@ -84,26 +84,20 @@ def get_args() -> ArgumentParser:
     parser = ArgumentParser(description=__doc__, underscores_to_dashes=True)
     return parser.parse_args()
 
+def get_token(env_name: str) -> str:
+    file_env = f"{env_name}_FILE"
+    if file_env in environ:
+        with open(environ[file_env], "r") as f:
+            return f.readline()
+    else:
+        return environ[env_name]
 
+	
 def get_tokens() -> tuple[str, str, str]:
     try:
-        if "SOURCE_TOKEN_FILE" in environ:
-            with open(environ["SOURCE_TOKEN_FILE"], "r") as file:
-                source_token = file.readline()
-        else:
-            source_token = environ["SOURCE_TOKEN"]
-
-        if "TARGET_TOKEN_FILE" in environ:
-            with open(environ["TARGET_TOKEN_FILE"], "r") as file:
-                target_token = file.readline()
-        else:
-            target_token = environ["TARGET_TOKEN"]
-
-        if "MIRROR_TOKEN_FILE" in environ:
-            with open(environ["MIRROR_TOKEN_FILE"], "r") as file:
-                mirror_token = file.readline()
-        else:
-            mirror_token = environ["MIRROR_TOKEN"]
+        source_token = get_token("SOURCE_TOKEN")
+        target_token = get_token("TARGET_TOKEN")
+        mirror_token = get_token("MIRROR_TOKEN")
     except KeyError as e:
         raise RuntimeError(f"Missing token: {e}")
     except OSError as e:
