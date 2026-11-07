@@ -87,11 +87,23 @@ def get_args() -> ArgumentParser:
 
 def get_tokens() -> tuple[str, str, str]:
     try:
-        source_token = environ["SOURCE_TOKEN"]
-        target_token = environ["TARGET_TOKEN"]
-        mirror_token = environ["MIRROR_TOKEN"]
+        if "SOURCE_TOKEN_FILE" in environ:
+            with open(environ["SOURCE_TOKEN_FILE"], "r") as file:
+                source_token = file.readline()
+        if "TARGET_TOKEN_FILE" in environ:
+            with open(environ["TARGET_TOKEN_FILE"], "r") as file:
+                target_token = file.readline()
+        if "MIRROR_TOKEN_FILE" in environ:
+            with open(environ["MIRROR_TOKEN_FILE"], "r") as file:
+                mirror_token = file.readline()
+        
+        source_token = source_token or environ["SOURCE_TOKEN"]
+        target_token = target_token or environ["TARGET_TOKEN"]
+        mirror_token = mirror_token or environ["MIRROR_TOKEN"]
     except KeyError as e:
         raise RuntimeError(f"Missing token: {e}")
+    except OSError as e:
+       raise RuntimeError(f"Missing token file: {e}")
 
     return source_token, target_token, mirror_token
 
