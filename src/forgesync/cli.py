@@ -84,6 +84,7 @@ def get_args() -> ArgumentParser:
     parser = ArgumentParser(description=__doc__, underscores_to_dashes=True)
     return parser.parse_args()
 
+
 def get_token(env_name: str) -> str:
     file_env = f"{env_name}_FILE"
     if file_env in environ:
