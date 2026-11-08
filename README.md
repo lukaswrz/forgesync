@@ -44,7 +44,7 @@ forgesync https://codeberg.org/api/v1 github \
 
 Run `forgesync --help` to see what the example options do, and which ones you can add on top.
 
-Check [required token scopes](#required-token-scopes) to find out what you need to specify when creating tokens.
+Check [required token permissions](#required-token-permissions) to find out what you need to specify when creating tokens.
 
 > [!WARNING]
 > Before running Forgesync, make sure you have backed up your repositories from the destination if you have any and plan to keep them. Forgesync will overwrite any repositories at the destination that share the same names as those on the source Forgejo instance. For more information, see [syncing by name](#syncing-by-name).
