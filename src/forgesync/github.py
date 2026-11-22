@@ -1,22 +1,24 @@
 from dataclasses import replace
 from logging import Logger
 from typing import Self, override
+
+from github import Auth as GithubAuth
+from github import Github
 from github.AuthenticatedUser import AuthenticatedUser
 from github.GithubException import GithubException
 from github.GithubObject import NotSet
 from github.Repository import Repository as GithubRepository
-from github import Github, Auth as GithubAuth
 
-from .source import SourceRepository
-from .platform import Platform
 from .mirror import PushMirrorConfig, PushMirrorer, Remirror
+from .platform import Platform
+from .source import SourceRepository
 from .sync import (
     RepositoryError,
     RepositoryFeature,
-    SyncError,
     RepositorySkippedError,
     SyncedRepository,
     Syncer,
+    SyncError,
 )
 
 

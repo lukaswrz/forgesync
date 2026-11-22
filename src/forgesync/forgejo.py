@@ -1,24 +1,28 @@
-from logging import Logger
-from typing import Self, override, Callable, Iterator, TypeVar, Any, Sequence
-from pyforgejo import PyforgejoApi, Repository as ForgejoRepository, User as ForgejoUser
+from collections.abc import Callable, Iterator, Sequence
 from itertools import count
+from logging import Logger
+from typing import Any, Self, TypeVar, override
 
-from .source import SourceRepository
+from pyforgejo import PyforgejoApi
+from pyforgejo import Repository as ForgejoRepository
+from pyforgejo import User as ForgejoUser
+
 from .platform import Platform
+from .source import SourceRepository
 from .sync import (
     RepositoryError,
     RepositoryFeature,
     RepositorySkippedError,
-    SyncError,
     SyncedRepository,
     Syncer,
+    SyncError,
 )
 
 T = TypeVar("T")
 R = TypeVar("R")
 
 
-def depaginate(
+def depaginate[R, T](
     func: Callable[..., R],
     *args: Any,
     convert: Callable[[R], Sequence[T] | None] = lambda item: item,

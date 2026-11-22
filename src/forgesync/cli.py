@@ -2,9 +2,9 @@
 Automatically mirror all your Forgejo repositories to GitHub or any Forgejo instance.
 """
 
-from logging import Formatter, Logger, StreamHandler
+from logging import Formatter, Logger, StreamHandler, getLogger
 from os import environ
-from sys import stderr
+from sys import exit, stderr
 from typing import Self, override
 
 from pyforgejo import PyforgejoApi
@@ -67,7 +67,7 @@ class ArgumentParser(Tap):
 
 
 def make_logger(name: str, level: str) -> Logger:
-    logger = Logger(name)
+    logger = getLogger(name)
     logger.setLevel(level)
     formatter = Formatter(
         fmt="{asctime} [{levelname}] {name} ({filename}:{lineno}) - {message}",
@@ -102,7 +102,7 @@ def get_tokens() -> tuple[str, str, str]:
     except KeyError as e:
         raise RuntimeError(f"Missing token: {e}")
     except OSError as e:
-       raise RuntimeError(f"Missing or inaccessible token file: {e}")
+        raise RuntimeError(f"Missing or inaccessible token file: {e}")
 
     return source_token, target_token, mirror_token
 

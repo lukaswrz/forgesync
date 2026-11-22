@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from enum import StrEnum
 from logging import Logger
 from typing import Self
-from enum import StrEnum
+
 from pyforgejo import PushMirror, PyforgejoApi
 
-from .sync import SyncedRepository
 from .forgejo import depaginate
+from .sync import SyncedRepository
 
 
 class MirrorError(RuntimeError):

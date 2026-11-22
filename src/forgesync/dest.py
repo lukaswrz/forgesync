@@ -1,12 +1,12 @@
 from logging import Logger
 from re import fullmatch
-from typing import override
+from typing import Self, override
 
-from .platform import CODEBERG_INSTANCE, GITHUB_INSTANCE, Platform
-from .mirror import PushMirrorConfig, PushMirrorer
-from .sync import Syncer, RepositoryFeature
-from .github import GithubSyncer
 from .forgejo import ForgejoSyncer
+from .github import GithubSyncer
+from .mirror import PushMirrorConfig, PushMirrorer
+from .platform import CODEBERG_INSTANCE, GITHUB_INSTANCE, Platform
+from .sync import RepositoryFeature, Syncer
 
 
 class Destination:
@@ -28,7 +28,7 @@ class Destination:
                     raise DestinationError("Forgejo does not have a default instance")
 
     @classmethod
-    def parse(cls, string: str) -> "Destination":
+    def parse(cls, string: str) -> Self:
         match = fullmatch(r"(?P<platform>[^=]+)(=(?P<instance>.+))?", string)
         if match is None:
             raise ValueError(f"Invalid destination syntax: {string}")

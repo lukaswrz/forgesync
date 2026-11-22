@@ -1,5 +1,6 @@
-from github.GithubObject import Consts
 from enum import StrEnum
+
+from github.GithubObject import Consts
 
 GITHUB_INSTANCE = Consts.DEFAULT_BASE_URL
 CODEBERG_INSTANCE = "https://codeberg.org/api/v1"

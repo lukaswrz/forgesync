@@ -1,11 +1,12 @@
 from typing import override
+
 from pyforgejo import PyforgejoApi
 
 from .dest import Destination
+from .forgejo import depaginate
 from .mirror import PushMirrorConfig, PushMirrorer
 from .source import SourceRepository
 from .sync import Syncer
-from .forgejo import depaginate
 
 
 class Task:

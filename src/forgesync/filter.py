@@ -1,4 +1,4 @@
-from collections.abc import Iterator, Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from logging import Logger
 from re import fullmatch

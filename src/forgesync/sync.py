@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
 
-from .source import SourceRepository
 from .platform import Platform
+from .source import SourceRepository
 
 
 class RepositoryFeature(StrEnum):
