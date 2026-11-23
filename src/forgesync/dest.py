@@ -49,6 +49,7 @@ class Destination:
         logger: Logger,
         push_mirrorer: PushMirrorer,
         push_mirror_config: PushMirrorConfig,
+        org: str | None = None,
     ) -> Syncer:
         match self.platform:
             case Platform.GITHUB:
@@ -66,6 +67,7 @@ class Destination:
                     token=token,
                     features=features,
                     logger=logger,
+                    org=org,
                 )
 
     @override
